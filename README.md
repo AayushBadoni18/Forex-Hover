@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="icons/icon128.png" alt="Forex Hover Pro Logo" width="96"/>
+<img src="./forex_hover_browser_extension/icons/icon128.png" alt="Forex Hover Pro Logo" width="96"/>
 
 # Forex Hover Pro
 
