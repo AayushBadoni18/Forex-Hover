@@ -6,10 +6,10 @@
 
 **Instant, multi-currency price conversion — right where you browse.**
 
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/)
-[![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)](https://developer.chrome.com/docs/extensions/mv3/intro/)
-[![ExchangeRate-API](https://img.shields.io/badge/Rates-ExchangeRate--API-00c46a)](https://www.exchangerate-api.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-1a1a2e?style=for-the-badge&logo=googlechrome&logoColor=4285F4)](https://developer.chrome.com/docs/extensions/)
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-0f3460?style=for-the-badge&logo=googlechrome&logoColor=e0e0ff)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![ExchangeRate-API](https://img.shields.io/badge/Rates-ExchangeRate--API-16213e?style=for-the-badge&logo=currencydollar&logoColor=00e5a0)](https://www.exchangerate-api.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0d0d0d?style=for-the-badge&logo=opensourceinitiative&logoColor=c8a84b)](LICENSE)
 
 </div>
 
@@ -46,8 +46,8 @@ Hover over any price to see an instant multi-currency breakdown in a floating to
 
 <table>
   <tr>
-    <td><img src="docs/example1.png" alt="Hover tooltip on Macy's product page" width="480"/></td>
-    <td><img src="docs/example2.png" alt="Hover tooltip showing selected price on Macy's" width="480"/></td>
+    <td><img src="readme_images/example1.png" alt="Hover tooltip on Macy's product page" width="480"/></td>
+    <td><img src="readme_images/example2.png" alt="Hover tooltip showing selected price on Macy's" width="480"/></td>
   </tr>
   <tr>
     <td align="center"><em>Hover — tooltip appears automatically</em></td>
@@ -61,8 +61,8 @@ Works on any site in any currency — including Indian Rupee, Japanese Yen, and 
 
 <table>
   <tr>
-    <td><img src="docs/example3.png" alt="Hover tooltip on Amazon India search results" width="480"/></td>
-    <td><img src="docs/example4.png" alt="Text selection tooltip on Amazon India" width="480"/></td>
+    <td><img src="readme_images/example3.png" alt="Hover tooltip on Amazon India search results" width="480"/></td>
+    <td><img src="readme_images/example4.png" alt="Text selection tooltip on Amazon India" width="480"/></td>
   </tr>
   <tr>
     <td align="center"><em>Hover on Amazon.in — ₹ detected and converted</em></td>
@@ -76,8 +76,8 @@ Click the extension icon to open the manual converter. Enter any amount, choose 
 
 <table>
   <tr>
-    <td><img src="docs/popup1.png" alt="Popup converter ready to convert" width="280"/></td>
-    <td><img src="docs/popup2.png" alt="Popup converter showing result with Convert again" width="280"/></td>
+    <td><img src="readme_images/popup1.png" alt="Popup converter ready to convert" width="280"/></td>
+    <td><img src="readme_images/popup2.png" alt="Popup converter showing result with Convert again" width="280"/></td>
   </tr>
   <tr>
     <td align="center"><em>Popup — ready to convert</em></td>
