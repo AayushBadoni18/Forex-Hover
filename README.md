@@ -46,8 +46,8 @@ Hover over any price to see an instant multi-currency breakdown in a floating to
 
 <table>
   <tr>
-    <td><img src="docs/example1.png" alt="Hover tooltip on Macy's product page" width="480"/></td>
-    <td><img src="docs/example2.png" alt="Hover tooltip showing selected price on Macy's" width="480"/></td>
+    <td><img src="./readme_images/example1.png" alt="Hover tooltip on Macy's product page" width="480"/></td>
+    <td><img src="./readme_images/example2.png" alt="Hover tooltip showing selected price on Macy's" width="480"/></td>
   </tr>
   <tr>
     <td align="center"><em>Hover — tooltip appears automatically</em></td>
@@ -61,8 +61,8 @@ Works on any site in any currency — including Indian Rupee, Japanese Yen, and 
 
 <table>
   <tr>
-    <td><img src="docs/example3.png" alt="Hover tooltip on Amazon India search results" width="480"/></td>
-    <td><img src="docs/example4.png" alt="Text selection tooltip on Amazon India" width="480"/></td>
+    <td><img src="./readme_images/example3.png" alt="Hover tooltip on Amazon India search results" width="480"/></td>
+    <td><img src="./readme_images/example4.png" alt="Text selection tooltip on Amazon India" width="480"/></td>
   </tr>
   <tr>
     <td align="center"><em>Hover on Amazon.in — ₹ detected and converted</em></td>
@@ -76,8 +76,8 @@ Click the extension icon to open the manual converter. Enter any amount, choose 
 
 <table>
   <tr>
-    <td><img src="docs/popup1.png" alt="Popup converter ready to convert" width="280"/></td>
-    <td><img src="docs/popup2.png" alt="Popup converter showing result with Convert again" width="280"/></td>
+    <td><img src="./readme_images/popup1.png" alt="Popup converter ready to convert" width="280"/></td>
+    <td><img src="./readme_images/popup2.png" alt="Popup converter showing result with Convert again" width="280"/></td>
   </tr>
   <tr>
     <td align="center"><em>Popup — ready to convert</em></td>
