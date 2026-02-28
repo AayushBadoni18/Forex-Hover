@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Forex Hover Pro — Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════════════
+   FOREX HOVER PRO — Settings v3
+   Aesthetic: Editorial · Typography-first · Airy
+   Palette: Warm cream · Ink black · Money green
+═══════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:   #faf8f3;
+  --parchment: #f2ede3;
+  --rule:    #e4ddd1;
+  --rule2:   #cfc7b8;
+  --ink:     #1a1612;
+  --ink2:    #3d3830;
+  --ink3:    #6b6259;
+  --green:   #0a7a45;
+  --green-light: #e8f5ee;
+  --green-mid:   #b8dfc8;
+  --red:     #c0392b;
+  --blue:    #1a3fff;
+
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans:  'Plus Jakarta Sans', system-ui, sans-serif;
+  --mono:  'Fira Code', 'Courier New', monospace;
+
+  --page-max: 780px;
+}
+
+/* ── Reset & base ── */
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--parchment); }
+::-webkit-scrollbar-thumb { background: var(--rule2); border-radius: 2px; }
+
+/* ═══════════════════════════════════════════════
+   LAYOUT — sidebar + main
+═══════════════════════════════════════════════ */
+.layout { display: flex; flex: 1; }
+
+/* ═══════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════ */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--ink);
+  color: var(--cream);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.sidebar-brand {
+  padding: 36px 32px 32px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.brand-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--green-mid);
+  margin-bottom: 12px;
+  animation: fadeSlideDown 0.5s ease both;
+}
+
+.brand-name {
+  font-family: var(--serif);
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--cream);
+  animation: fadeSlideDown 0.5s 0.1s ease both;
+}
+
+.brand-name em {
+  font-style: italic;
+  color: var(--green-mid);
+}
+
+.brand-version {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  margin-top: 8px;
+  font-family: var(--mono);
+  animation: fadeSlideDown 0.5s 0.2s ease both;
+}
+
+/* Nav */
+.sidebar-nav {
+  flex: 1;
+  padding: 28px 20px;
+}
+
+.nav-group-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  padding: 0 12px;
+  margin-bottom: 10px;
+  margin-top: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  transition: all 0.2s;
+  text-decoration: none;
+  margin-bottom: 2px;
+  letter-spacing: -0.1px;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--cream);
+}
+
+.nav-item.active {
+  background: var(--green);
+  color: var(--cream);
+  font-weight: 600;
+}
+
+.nav-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 20px 32px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  line-height: 1.6;
+}
+.sidebar-footer a {
+  color: var(--green-mid);
+  text-decoration: none;
+}
+.sidebar-footer a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════════════════════ */
+.main {
+  flex: 1;
+  max-width: var(--page-max);
+  padding: 64px 72px;
+}
+
+/* ── Page sections ── */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* ═══════════════════════════════════════════════
+   SECTION HEADERS — big editorial typography
+═══════════════════════════════════════════════ */
+.section-header {
+  margin-bottom: 48px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 28px;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 14px;
+  opacity: 0;
+  animation: fadeSlideUp 0.5s ease both;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(42px, 5vw, 60px);
+  line-height: 1.0;
+  letter-spacing: -1px;
+  color: var(--ink);
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+/* Each word in title animates in */
+.section-title .word {
+  display: inline-block;
+  animation: wordReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  margin-right: 0.18em;
+}
+.section-title .word:nth-child(1) { animation-delay: 0.1s; }
+.section-title .word:nth-child(2) { animation-delay: 0.18s; }
+.section-title .word:nth-child(3) { animation-delay: 0.26s; }
+.section-title .word:nth-child(4) { animation-delay: 0.34s; }
+.section-title .word.italic { font-style: italic; color: var(--ink2); }
+
+.section-subtitle {
+  font-size: 17px;
+  color: var(--ink3);
+  line-height: 1.65;
+  max-width: 520px;
+  font-weight: 400;
+  opacity: 0;
+  animation: fadeSlideUp 0.5s 0.4s ease both;
+}
+
+@keyframes wordReveal {
+  from { transform: translateY(110%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════
+   CONTENT BLOCKS
+═══════════════════════════════════════════════ */
+.block {
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: fadeSlideUp 0.5s ease both;
+}
+.block:nth-child(1) { animation-delay: 0.5s; }
+.block:nth-child(2) { animation-delay: 0.6s; }
+.block:nth-child(3) { animation-delay: 0.7s; }
+.block:nth-child(4) { animation-delay: 0.8s; }
+
+.block-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.block-title .tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: var(--green);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 400;
+  vertical-align: middle;
+}
+.block-title .tag.grey {
+  background: var(--parchment);
+  color: var(--ink3);
+  border: 1px solid var(--rule2);
+}
+
+.block-body {
+  font-size: 15px;
+  color: var(--ink3);
+  line-height: 1.7;
+  margin-bottom: 22px;
+  font-weight: 400;
+}
+
+.block-body a {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.block-body code {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--parchment);
+  border: 1px solid var(--rule2);
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: var(--ink2);
+}
+
+/* Horizontal rule */
+.h-rule {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 36px 0;
+}
+
+/* ═══════════════════════════════════════════════
+   INPUTS
+═══════════════════════════════════════════════ */
+.field-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 8px;
+}
+
+input[type="text"],
+input[type="password"],
+.text-input {
+  width: 100%;
+  padding: 13px 16px;
+  background: var(--cream);
+  border: 2px solid var(--rule2);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+.text-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(10,122,69,0.1);
+}
+input::placeholder { color: var(--rule2); }
+
+.api-input { font-size: 13px; }
+
+/* Select */
+select {
+  padding: 12px 14px;
+  background: var(--cream);
+  border: 2px solid var(--rule2);
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+select:focus { border-color: var(--green); }
+
+/* Row layout */
+.input-row { display: flex; gap: 10px; align-items: flex-end; }
+.input-row .text-input { flex: 1; }
+
+/* ═══════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════ */
+.btn {
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--ink);
+  color: var(--cream);
+}
+.btn-primary:hover {
+  background: var(--ink2);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-green {
+  background: var(--green);
+  color: white;
+}
+.btn-green:hover { background: #0a6a3c; transform: translateY(-1px); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink3);
+  border: 2px solid var(--rule2);
+  padding: 11px 20px;
+}
+.btn-ghost:hover { border-color: var(--ink3); color: var(--ink); }
+
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+
+/* Status messages */
+.status-msg {
+  font-size: 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-weight: 500;
+  display: none;
+}
+.status-msg.ok  { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+.status-msg.err { background: #fdf0ef; color: var(--red); border: 1px solid #f5c0bc; }
+.status-msg.show { display: block; animation: fadeSlideUp 0.3s ease both; }
+
+/* ═══════════════════════════════════════════════
+   TOGGLE SWITCH
+═══════════════════════════════════════════════ */
+.pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.pref-row:last-child { border-bottom: none; }
+
+.pref-text {}
+.pref-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
+}
+.pref-desc {
+  font-size: 14px;
+  color: var(--ink3);
+  line-height: 1.55;
+  max-width: 400px;
+}
+
+.toggle {
+  position: relative;
+  width: 52px; height: 30px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--rule2);
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.25s;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 4px; left: 4px;
+  width: 22px; height: 22px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.toggle input:checked + .toggle-track { background: var(--green); }
+.toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(22px); }
+
+/* ═══════════════════════════════════════════════
+   CURRENCY SELECTOR
+═══════════════════════════════════════════════ */
+.search-wrap {
+  position: relative;
+  margin-bottom: 20px;
+}
+.search-wrap .search-icon {
+  position: absolute;
+  left: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink3);
+  font-size: 14px;
+  pointer-events: none;
+}
+.currency-search {
+  width: 100%;
+  padding: 13px 16px 13px 42px;
+  background: var(--cream);
+  border: 2px solid var(--rule2);
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.currency-search:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(10,122,69,0.1);
+}
+.currency-search::placeholder { color: var(--rule2); }
+
+/* Selected chips */
+.chip-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 46px;
+  padding: 12px 16px;
+  background: var(--parchment);
+  border: 2px solid var(--rule);
+  border-radius: 10px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s;
+}
+.chip-area:has(.chip) { border-color: var(--green-mid); }
+
+.chip-empty {
+  font-size: 14px;
+  color: var(--ink3);
+  align-self: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 10px;
+  background: var(--green);
+  color: white;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  animation: chipIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes chipIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.chip:hover { background: var(--red); }
+.chip .chip-flag { font-size: 15px; }
+.chip .chip-x { opacity: 0.7; font-size: 15px; }
+
+.count-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.count-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink3);
+}
+.count-text strong { color: var(--green); }
+
+/* Currency grid */
+.currency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.currency-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  background: var(--parchment);
+  border: 2px solid var(--rule);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.currency-chip:hover {
+  border-color: var(--rule2);
+  background: var(--cream);
+}
+.currency-chip.selected {
+  background: var(--green);
+  border-color: var(--green);
+}
+.currency-chip.selected:hover { background: #0a6a3c; }
+
+.cc-flag { font-size: 19px; line-height: 1; flex-shrink: 0; }
+.cc-info { min-width: 0; flex: 1; }
+.cc-code {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.cc-name {
+  font-size: 11px;
+  color: var(--ink3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+.currency-chip.selected .cc-code { color: white; }
+.currency-chip.selected .cc-name { color: rgba(255,255,255,0.7); }
+.cc-check {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--green);
+  font-weight: 900;
+  opacity: 0;
+  flex-shrink: 0;
+  transform: scale(0);
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.currency-chip.selected .cc-check { opacity: 1; transform: scale(1); }
+
+/* ═══════════════════════════════════════════════
+   SYMBOL TABLE (domain detection)
+═══════════════════════════════════════════════ */
+.symbol-table { width: 100%; border-collapse: collapse; }
+.symbol-table th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  padding: 8px 12px 12px;
+  border-bottom: 2px solid var(--rule);
+}
+.symbol-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 15px;
+  vertical-align: middle;
+}
+.symbol-table tr:last-child td { border-bottom: none; }
+.symbol-table tr:hover td { background: var(--parchment); }
+
+.sym-glyph {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.sym-currency {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--green);
+}
+.sym-note { font-size: 13px; color: var(--ink3); }
+
+/* Override rows */
+.domain-table { width: 100%; border-collapse: collapse; }
+.domain-table th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  padding: 8px 12px 12px;
+  border-bottom: 2px solid var(--rule);
+}
+.domain-table td {
+  padding: 12px 12px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+.domain-table tr:last-child td { border-bottom: none; }
+.domain-table tr:hover td { background: var(--parchment); }
+.dt-domain { font-family: var(--mono); font-size: 14px; color: var(--ink); }
+.dt-currency { font-family: var(--mono); font-size: 14px; color: var(--green); font-weight: 500; }
+.dt-flag { font-size: 18px; }
+.dt-remove {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink3); font-size: 16px; padding: 4px 8px;
+  border-radius: 6px; transition: all 0.12s;
+}
+.dt-remove:hover { background: #fdf0ef; color: var(--red); }
+
+/* Add domain row */
+.add-row {
+  display: flex; gap: 10px; margin-top: 20px; align-items: center;
+}
+.add-row input { flex: 1; }
+
+/* ═══════════════════════════════════════════════
+   API KEY
+═══════════════════════════════════════════════ */
+.api-row { display: flex; gap: 10px; align-items: stretch; }
+.api-row input { flex: 1; }
+
+.api-warning {
+  display: none;
+  padding: 14px 18px;
+  background: #fffaed;
+  border: 2px solid #f0c040;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #7a5c00;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+.api-warning.visible { display: block; animation: fadeSlideUp 0.3s ease both; }
+
+/* Code block */
+.code-block {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--ink);
+  color: var(--green-mid);
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin: 14px 0;
+  letter-spacing: 0.2px;
+}
+
+/* ═══════════════════════════════════════════════
+   ABOUT PAGE — editorial stats
+═══════════════════════════════════════════════ */
+.about-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--rule);
+  border: 2px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+.stat-cell {
+  background: var(--cream);
+  padding: 28px 28px;
+}
+.stat-number {
+  font-family: var(--serif);
+  font-size: 48px;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -1px;
+  margin-bottom: 6px;
+  opacity: 0;
+  animation: countUp 0.6s ease both;
+}
+.stat-cell:nth-child(1) .stat-number { animation-delay: 0.5s; }
+.stat-cell:nth-child(2) .stat-number { animation-delay: 0.6s; }
+.stat-cell:nth-child(3) .stat-number { animation-delay: 0.7s; }
+.stat-cell:nth-child(4) .stat-number { animation-delay: 0.8s; }
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stat-number span { color: var(--green); }
+.stat-label {
+  font-size: 13px;
+  color: var(--ink3);
+  font-weight: 400;
+}
+
+/* Preview box */
+.preview-strip {
+  padding: 24px 28px;
+  background: var(--parchment);
+  border: 2px solid var(--rule);
+  border-radius: 12px;
+  font-size: 17px;
+  color: var(--ink3);
+  line-height: 2;
+}
+.ph {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom: 2px dashed var(--green-mid);
+  padding-bottom: 1px;
+  cursor: help;
+  transition: border-color 0.15s;
+}
+.ph:hover { border-color: var(--green); }
+
+/* ═══════════════════════════════════════════════
+   SAVE BAR
+═══════════════════════════════════════════════ */
+.save-bar {
+  position: fixed;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--ink);
+  color: var(--cream);
+  border-radius: 100px;
+  padding: 14px 18px 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 16px 48px rgba(26,22,18,0.3);
+  transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 999;
+  white-space: nowrap;
+}
+.save-bar.visible { transform: translateX(-50%) translateY(0); }
+.save-bar-text { font-size: 14px; color: rgba(255,255,255,0.6); font-weight: 400; }
+.save-feedback {
+  font-size: 14px; color: var(--green-mid); font-weight: 600;
+  display: none; align-items: center; gap: 6px;
+}
+.save-feedback.show { display: flex; animation: fadeSlideUp 0.3s ease both; }
+
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-eyebrow">Currency Converter</div>
+      <div class="brand-name">Forex<br><em>Hover Pro</em></div>
+      <div class="brand-version">v2.0 · Chrome Extension</div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-group-label">Settings</div>
+      <a class="nav-item active" data-page="currencies" href="#">
+        <span class="nav-icon">💱</span> Currencies
+      </a>
+      <a class="nav-item" data-page="setup" href="#">
+        <span class="nav-icon">🚀</span> Setup Guide
+      </a>
+      <a class="nav-item" data-page="domains" href="#">
+        <span class="nav-icon">🌐</span> Domain Rules
+      </a>
+      <a class="nav-item" data-page="behavior" href="#">
+        <span class="nav-icon">⚙️</span> Behavior
+      </a>
+      <div class="nav-group-label" style="margin-top:20px">Info</div>
+      <a class="nav-item" data-page="about" href="#">
+        <span class="nav-icon">ℹ️</span> About
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      Rates by<br>
+      <a href="https://www.exchangerate-api.com" target="_blank">ExchangeRate-API</a>
+    </div>
+  </nav>
+
+  <!-- ══ MAIN ══ -->
+  <main class="main">
+
+    <!-- ── CURRENCIES ── -->
+    <section class="page-section active" id="page-currencies">
+      <div class="section-header">
+        <div class="section-label">Configuration</div>
+        <h1 class="section-title">
+          <span class="word">Target</span>
+          <span class="word italic">Currencies</span>
+        </h1>
+        <p class="section-subtitle">
+          Pick which currencies prices convert into. All selected currencies appear together in the hover tooltip.
+        </p>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Selected <span class="tag" id="sel-count-badge">0</span></div>
+        <p class="block-body">Your active target currencies. Click any chip to remove it.</p>
+        <div class="chip-area" id="selected-strip">
+          <span class="chip-empty">No currencies selected yet</span>
+        </div>
+        <div class="count-bar">
+          <span class="count-text"><strong id="sel-count">0</strong> currencies selected</span>
+          <button class="btn btn-ghost btn-sm" id="clear-all-btn">Clear all</button>
+        </div>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="currency-search" id="currency-filter" placeholder="Search by name or code…" autocomplete="off"/>
+        </div>
+        <div class="currency-grid" id="currency-grid"></div>
+      </div>
+    </section>
+
+    <!-- ── SETUP GUIDE ── -->
+    <section class="page-section" id="page-setup">
+      <div class="section-header">
+        <div class="section-label">Getting Started</div>
+        <h1 class="section-title">
+          <span class="word">Setup</span>
+          <span class="word italic">Guide</span>
+        </h1>
+        <p class="section-subtitle">
+          Forex Hover Pro uses ExchangeRate-API v6 for live rates. The API key must be added directly into the extension source file — it takes about 2 minutes.
+        </p>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Step 1 — Get a free API key</div>
+        <p class="block-body">
+          Register for a free account at <a href="https://www.exchangerate-api.com" target="_blank">exchangerate-api.com</a>.
+          The free tier gives you <strong>1,500 requests per month</strong> — more than enough for personal use.
+          Rates are cached locally for 30 minutes, so most hovers never even hit the network.
+          After registering, copy your key from the dashboard.
+        </p>
+      </div>
+
+      <hr class="h-rule"/>
+
+      <div class="block">
+        <div class="block-title">Step 2 — Open <code>background.js</code></div>
+        <p class="block-body">
+          In your extension folder, open the file called <code>background.js</code> in any text editor (VS Code, Notepad, etc.).
+          Near the top of the file you will find this line:
+        </p>
+        <div class="code-block">// TODO: Replace with your ExchangeRate-API v6 key<br>const API_KEY = <span style="color:#ffcc88">""</span>;</div>
+        <p class="block-body">
+          Replace the empty <code>""</code> with your key inside the quotes. For example:
+        </p>
+        <div class="code-block">const API_KEY = <span style="color:#ffcc88">"abc123your_actual_key_here"</span>;</div>
+        <p class="block-body">Save the file.</p>
+      </div>
+
+      <hr class="h-rule"/>
+
+      <div class="block">
+        <div class="block-title">Step 3 — Reload the extension</div>
+        <p class="block-body">
+          After saving <code>background.js</code>, go to <code>chrome://extensions</code> in your browser.
+          Find <strong>Forex Hover Pro</strong> and click the <strong>↺ Reload</strong> button.
+          The extension will pick up the new key immediately.
+        </p>
+        <p class="block-body">
+          Then refresh any tab you want to use the extension on — the content script will reconnect and start converting prices.
+        </p>
+      </div>
+
+      <hr class="h-rule"/>
+
+      <div class="block">
+        <div class="block-title">Why is the key in the source file?</div>
+        <p class="block-body">
+          Chrome MV3 service workers start up before <code>chrome.storage</code> is accessible on a fresh install.
+          Hardcoding the key directly in <code>background.js</code> is the most reliable way to ensure it is available
+          the very first time the worker runs, with zero race conditions.
+          Since this extension is for personal use and runs locally on your machine, the key never leaves your device.
+        </p>
+      </div>
+    </section>
+
+    <!-- ── DOMAINS ── -->
+    <section class="page-section" id="page-domains">
+      <div class="section-header">
+        <div class="section-label">Detection</div>
+        <h1 class="section-title">
+          <span class="word">Domain</span>
+          <span class="word italic">Rules</span>
+        </h1>
+        <p class="section-subtitle">
+          Override automatic currency detection for specific websites. Useful when "$" is ambiguous on a non-US store.
+        </p>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Built-in symbol map <span class="tag grey">Always active</span></div>
+        <p class="block-body">These mappings apply automatically to every page.</p>
+        <table class="symbol-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Maps to</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="sym-glyph">$</td><td class="sym-currency">USD</td><td class="sym-note">Default (most common)</td></tr>
+            <tr><td class="sym-glyph">€</td><td class="sym-currency">EUR</td><td class="sym-note">Euro</td></tr>
+            <tr><td class="sym-glyph">£</td><td class="sym-currency">GBP</td><td class="sym-note">British Pound</td></tr>
+            <tr><td class="sym-glyph">¥</td><td class="sym-currency">JPY</td><td class="sym-note">Yen — also CNY</td></tr>
+            <tr><td class="sym-glyph">₹</td><td class="sym-currency">INR</td><td class="sym-note">Indian Rupee</td></tr>
+            <tr><td class="sym-glyph">₩</td><td class="sym-currency">KRW</td><td class="sym-note">Korean Won</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="h-rule"/>
+
+      <div class="block">
+        <div class="block-title">Per-domain overrides</div>
+        <p class="block-body">Force a specific base currency on a domain. Matching is suffix-based.</p>
+        <table class="domain-table" id="override-table">
+          <thead><tr><th>Domain</th><th>Currency</th><th></th></tr></thead>
+          <tbody id="override-tbody"></tbody>
+        </table>
+        <div class="add-row">
+          <input type="text" id="new-domain" placeholder="e.g. amazon.co.uk"/>
+          <select id="new-currency-select"></select>
+          <button class="btn btn-primary" id="add-override-btn">Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── BEHAVIOR ── -->
+    <section class="page-section" id="page-behavior">
+      <div class="section-header">
+        <div class="section-label">Preferences</div>
+        <h1 class="section-title">
+          <span class="word">Behavior</span>
+          <span class="word italic">Settings</span>
+        </h1>
+        <p class="section-subtitle">
+          Control how and when the extension activates across all pages.
+        </p>
+      </div>
+
+      <div class="block">
+        <div class="pref-row">
+          <div class="pref-text">
+            <div class="pref-name">Extension enabled</div>
+            <div class="pref-desc">Master switch. Off means no price annotations appear anywhere.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="pref-enabled" checked/>
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+        <div class="pref-row">
+          <div class="pref-text">
+            <div class="pref-name">Text selection mode</div>
+            <div class="pref-desc">Highlight any text with a price and the tooltip appears automatically at your cursor.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="pref-selection" checked/>
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+        <div class="pref-row">
+          <div class="pref-text">
+            <div class="pref-name">Underline detected prices</div>
+            <div class="pref-desc">Adds a dashed underline on every detected price, making them easy to spot at a glance.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="pref-underline" checked/>
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Preview</div>
+        <p class="block-body">How annotated prices look on a live page.</p>
+        <div class="preview-strip">
+          The laptop costs <span class="ph">$1,299.00</span> or <span class="ph">€999</span> in Europe, and <span class="ph">₹1,08,000</span> in India.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ABOUT ── -->
+    <section class="page-section" id="page-about">
+      <div class="section-header">
+        <div class="section-label">About this project</div>
+        <h1 class="section-title">
+          <span class="word">About</span>
+          <span class="word italic">the Extension</span>
+        </h1>
+        <p class="section-subtitle">
+          Built to solve a real frustration. A small tool that makes global browsing feel local.
+        </p>
+      </div>
+
+      <!-- Origin story -->
+      <div class="block">
+        <div class="block-title">Why I built this</div>
+        <p class="block-body">
+          I built this extension because I was constantly switching tabs just to convert prices while browsing international websites.
+          Whether I was looking at tech products, courses, or tools, I'd see a price in a different currency and immediately open
+          another tab to check what it meant in mine. It was repetitive, distracting, and honestly unnecessary.
+        </p>
+        <p class="block-body">This extension solves that.</p>
+        <p class="block-body">
+          Now, when you hover over or select a price on any webpage, it instantly shows the converted value in your chosen currencies
+          using live exchange rates. No extra tabs. No manual calculations. No friction.
+        </p>
+      </div>
+
+      <hr class="h-rule"/>
+
+      <!-- Design decisions -->
+      <div class="block">
+        <div class="block-title">Thoughtful edge cases</div>
+        <p class="block-body">
+          While building it, I realized that currency symbols like "$" aren't always clear — they could mean USD, CAD, AUD, and more.
+          So I added a website-specific override system that lets users assign the correct base currency to specific domains.
+          That way, conversions stay accurate even when symbols are ambiguous.
+        </p>
+      </div>
+
+      <hr class="h-rule"/>
+
+      <!-- What it reflects -->
+      <div class="block">
+        <div class="block-title">What this project reflects</div>
+        <p class="block-body">I wanted to create something practical — not just technically interesting, but genuinely useful in everyday browsing.</p>
+        <div class="focus-list">
+          <div class="focus-item">
+            <div class="focus-dot"></div>
+            <div>
+              <strong>Solving real usability problems</strong>
+              <p>The friction of tab-switching to convert a price is small but constant. Eliminating it entirely changes how browsing feels.</p>
+            </div>
+          </div>
+          <div class="focus-item">
+            <div class="focus-dot"></div>
+            <div>
+              <strong>Handling edge cases thoughtfully</strong>
+              <p>Ambiguous symbols, European number formats, dynamic content — each one considered and covered.</p>
+            </div>
+          </div>
+          <div class="focus-item">
+            <div class="focus-dot"></div>
+            <div>
+              <strong>Building clean, lightweight tools that feel seamless</strong>
+              <p>Shadow DOM isolation, debounced observers, service worker caching — invisible to the user, essential to the experience.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="h-rule"/>
+
+      <!-- Stats grid -->
+      <div class="block">
+        <div class="block-title">By the numbers</div>
+        <div class="about-stats">
+          <div class="stat-cell">
+            <div class="stat-number">50<span>+</span></div>
+            <div class="stat-label">Currencies supported</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-number">30<span>m</span></div>
+            <div class="stat-label">Rate cache TTL</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Analytics or tracking</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-number">MV<span>3</span></div>
+            <div class="stat-label">Chrome Manifest version</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="h-rule"/>
+
+      <!-- Technical details -->
+      <div class="block">
+        <div class="block-title">Rate provider</div>
+        <p class="block-body">
+          Live rates come from <a href="https://www.exchangerate-api.com" target="_blank">ExchangeRate-API v6</a>.
+          The free tier provides 1,500 requests/month — far more than enough for personal use.
+          Rates are cached locally for 30 minutes, so most hovers never touch the network.
+        </p>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Architecture</div>
+        <p class="block-body">
+          Chrome Manifest V3 with a Service Worker as the background process.
+          Price detection uses a <code>TreeWalker</code> for fast DOM traversal.
+          The tooltip renders inside a <code>Shadow DOM</code> to stay isolated from host page styles.
+          A <code>MutationObserver</code> with debouncing keeps dynamic pages (React, Vue, infinite scroll) fully covered.
+        </p>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Permissions</div>
+        <p class="block-body">
+          <code>storage</code> · <code>unlimitedStorage</code> · <code>contextMenus</code> · <code>tabs</code><br/>
+          Host permission: <code>https://v6.exchangerate-api.com/*</code>
+        </p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Save bar ── -->
+<div class="save-bar" id="save-bar">
+  <span class="save-bar-text">You have unsaved changes</span>
+  <div class="save-feedback" id="save-feedback">✓ Saved!</div>
+  <button class="btn btn-green" id="save-btn">Save Settings</button>
+</div>
+
+<!-- ── Animated footer ── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span class="footer-label">developed by</span>
+    <span class="footer-name">
+      <span class="fn-char" style="--i:0">A</span><span class="fn-char" style="--i:1">a</span><span class="fn-char" style="--i:2">y</span><span class="fn-char" style="--i:3">u</span><span class="fn-char" style="--i:4">s</span><span class="fn-char" style="--i:5">h</span><span class="fn-space"> </span><span class="fn-char" style="--i:6">B</span><span class="fn-char" style="--i:7">a</span><span class="fn-char" style="--i:8">d</span><span class="fn-char" style="--i:9">o</span><span class="fn-char" style="--i:10">n</span><span class="fn-char" style="--i:11">i</span>
+    </span>
+    <span class="footer-dot"></span>
+  </div>
+</footer>
+
+<style>
+/* ── Focus list (about page) ── */
+.focus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 6px;
+}
+.focus-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.focus-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+.focus-item strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.focus-item p {
+  font-size: 14px;
+  color: var(--ink3);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Footer ── */
+.site-footer {
+  background: var(--ink);
+  padding: 28px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  /* Sits below the layout — full width */
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Subtle animated gradient sweep behind the text */
+.site-footer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(10,122,69,0.08) 40%,
+    rgba(10,122,69,0.14) 50%,
+    rgba(10,122,69,0.08) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: footerShimmer 4s ease-in-out infinite;
+}
+@keyframes footerShimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.footer-inner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.footer-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+
+.footer-name {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-style: italic;
+  color: var(--cream);
+  letter-spacing: 0.5px;
+}
+
+/* Each character animates in on load, then subtly floats */
+.fn-char {
+  display: inline-block;
+  opacity: 0;
+  animation:
+    charReveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) calc(0.8s + var(--i) * 0.045s) both,
+    charFloat  3s ease-in-out calc(1.5s + var(--i) * 0.1s) infinite;
+}
+.fn-space { display: inline-block; width: 0.3em; }
+
+@keyframes charReveal {
+  from { opacity: 0; transform: translateY(14px) rotate(4deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+@keyframes charFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-3px); }
+}
+
+/* Pulsing green dot decoration */
+.footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(10,122,69,0.8);
+  animation: dotPulse 2s ease-in-out infinite;
+  opacity: 0;
+  animation: dotPulse 2s 2s ease-in-out infinite both;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1);   box-shadow: 0 0 6px rgba(10,122,69,0.6); }
+  50%       { opacity: 0.6; transform: scale(1.5); box-shadow: 0 0 14px rgba(10,122,69,0.9); }
+}
+</style>
+
+<script src="options.js"></script>
+<script>
+// ── Navigation ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', e => {
+    e.preventDefault();
+    const page = item.dataset.page;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    item.classList.add('active');
+    const section = document.getElementById('page-' + page);
+    if (section) section.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
