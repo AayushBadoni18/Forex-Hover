@@ -1,58 +1,20 @@
-# Forex Hover
+# FXConvert
 
-![Forex Hover Logo](readme_images/your_logo.png)  
-![Badges](https://img.shields.io/badge/license-MIT-green)
+![FXConvert Icon](https://path/to/fxconvert/icon.png)
 
----
+FXConvert is a powerful application designed to make foreign exchange conversions easier than ever.
 
-## Problem/Solution Narrative
-In a fast-paced trading environment, making timely decisions is crucial. Forex Hover is designed to provide real-time analysis and insights for forex traders.
+## Key Features
+- **Enhanced Animations**: Enjoy a smoother user experience with improved animations.
+- **Better Layout**: The modern layout ensures that you can find what you need quickly.
 
-## Features
-| Feature | Description |  
-| --- | --- |
-| 🚀 **Real-Time Data** | Instant updates on currency exchange rates. |
-| 🛠️ **User-Friendly Interface** | Simple navigation for traders of all levels. |
-| 📈 **Custom Alerts** | Set alerts for specific price points. |
-| 💹 **Analytics Dashboard** | Comprehensive data analysis tools. |
-| 🛡️ **Secure Trading** | Advanced security features.
+![Image representing feature 1](https://path.to/readme_images/feature1.png)
+![Image representing feature 2](https://path.to/readme_images/feature2.png)
 
----
-
-## Screenshots
-### Overview
-![Screenshot 1](readme_images/screenshot1.png)
-### Analytics
-![Screenshot 2](readme_images/screenshot2.png)
-
----
-
-## Quick Setup Guide
-1. Clone the repository: `git clone https://github.com/AayushBadoni18/Forex-Hover`
-2. Move to the directory: `cd Forex-Hover`
-3. Install dependencies: `npm install`
-4. Run the application: `npm start`
-5. Enjoy trading with real-time data!
-
----
-
-## Technical Architecture
-Forex Hover is built using a **React** frontend with a **Node.js** backend, ensuring a responsive and scalable application.
-
----
-
-## Privacy
-We respect your privacy and are committed to protecting it. No personal data will be shared without consent.
-
----
-
-## Troubleshooting
-If you encounter any issues:
-1. Check the console for error messages.
-2. Ensure all dependencies are installed.
-3. Refer to [FAQ](https://github.com/AayushBadoni18/Forex-Hover/issues) for common questions.
-
----
+Check out the last images to understand what we offer:
+![Image 1](https://path.to/readme_images/image1.png)
+![Image 2](https://path.to/readme_images/image2.png)
 
 ## Footer
-Developed by [Aayush Badoni](https://github.com/AayushBadoni18)
+---
+Developed by Aayush Badoni
