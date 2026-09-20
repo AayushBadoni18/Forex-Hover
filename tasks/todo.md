@@ -19,7 +19,7 @@ Canonical task detail: [`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md).
 ## Milestone 2 — Domain model, parser, and settings
 
 - [x] M2-T1 Create the canonical currency catalog.
-- [ ] M2-T2 Define typed message and storage contracts.
+- [x] M2-T2 Define typed message and storage contracts.
 - [ ] M2-T3 Replace the master regex with a tokenizer/parser.
 - [ ] M2-T4 Implement currency evidence resolution and domain overrides.
 - [ ] M2-T5 Add settings schema, repair, and migration.

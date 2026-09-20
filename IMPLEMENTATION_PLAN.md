@@ -217,7 +217,7 @@ flowchart TD
 
 **Completion criteria:** All newly migrated code imports the catalog; legacy copies are removed only as their consumers migrate.
 
-### [ ] M2-T2: Define typed message and storage contracts
+### [x] M2-T2: Define typed message and storage contracts
 
 **Objective:** Make cross-context and persisted boundaries explicit.
 
