@@ -176,7 +176,7 @@ flowchart TD
 
 **Completion criteria:** No parser rewrite begins without a corpus that would catch current regressions.
 
-### [ ] M1-T4: Add extension-load smoke tests
+### [x] M1-T4: Add extension-load smoke tests
 
 **Objective:** Detect CSP, missing-resource, and startup regressions in a real clean Chrome profile.
 

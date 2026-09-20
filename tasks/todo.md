@@ -14,7 +14,7 @@ Canonical task detail: [`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md).
 - [x] M1-T1 Initialize version control and secret-safe ignores.
 - [x] M1-T2 Add the minimum TypeScript/build/test toolchain.
 - [x] M1-T3 Capture executable regression fixtures for current behavior.
-- [ ] M1-T4 Add extension-load smoke tests.
+- [x] M1-T4 Add extension-load smoke tests.
 
 ## Milestone 2 — Domain model, parser, and settings
 
