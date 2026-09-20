@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Forex Hover Pro",
+  "version": "2.0.0",
+  "description": "Instantly convert prices on any webpage — hover or select text to see multi-currency conversions.",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "contextMenus",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://v6.exchangerate-api.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["priceDetector.js", "tooltip.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

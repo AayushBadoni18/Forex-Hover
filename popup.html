@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Forex Hover Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0e1117;
+  --surface:  #161b27;
+  --surface2: #1e2535;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --green:    #00c46a;
+  --green-dim: rgba(0,196,106,0.12);
+  --green-glow: rgba(0,196,106,0.25);
+  --text:     #eef1f8;
+  --text-dim: rgba(180,195,230,0.5);
+  --text-mid: rgba(200,210,240,0.75);
+  --danger:   #ff5c5c;
+  --warn:     #ffaa33;
+  --serif:    'Instrument Serif', Georgia, serif;
+  --sans:     'Plus Jakarta Sans', system-ui, sans-serif;
+  --mono:     'Fira Code', monospace;
+  --radius:   12px;
+}
+
+html { font-size: 13px; }
+body {
+  width: 340px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── HEADER ──────────────────────────────── */
+.header {
+  padding: 14px 16px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(0,196,106,0.05) 0%, transparent 55%);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.logo-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+.logo-name {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-style: italic;
+  color: var(--text);
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+}
+.logo-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 500;
+  margin-top: 1px;
+  font-family: var(--sans);
+}
+
+/* Toggle */
+.toggle { position: relative; width: 40px; height: 23px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.22s;
+}
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 15px; height: 15px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), background 0.2s;
+}
+.toggle input:checked + .toggle-track {
+  background: var(--green-dim);
+  border-color: rgba(0,196,106,0.3);
+  box-shadow: 0 0 0 3px rgba(0,196,106,0.08);
+}
+.toggle input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(17px);
+  background: var(--green);
+}
+
+/* ─── STATUS BAR ──────────────────────────── */
+.status-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 12px;
+  margin: 12px 14px 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green-glow);
+  flex-shrink: 0;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+.status-dot.off {
+  background: var(--danger);
+  box-shadow: 0 0 6px rgba(255,92,92,0.4);
+  animation: none;
+}
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 4px var(--green-glow); }
+  50%      { box-shadow: 0 0 10px var(--green-glow); }
+}
+.status-text { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+
+/* ─── API WARNING ─────────────────────────── */
+.api-warning {
+  margin: 10px 14px 0;
+  padding: 8px 11px;
+  background: rgba(255,92,92,0.07);
+  border: 1px solid rgba(255,92,92,0.2);
+  border-radius: 8px;
+  font-size: 11px; color: #ff8888; line-height: 1.5;
+  display: none;
+}
+.api-warning.visible { display: block; }
+
+/* ─── SECTION DIVIDER ────────────────────── */
+.divider {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 14px 8px;
+}
+.divider-label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.divider-line {
+  flex: 1; height: 1px;
+  background: var(--border);
+}
+
+/* ─── ACTIVE CURRENCIES CHIPS ────────────── */
+.curr-chips {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  padding: 0 14px 12px;
+}
+.curr-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 9px;
+  background: var(--green-dim);
+  border: 1px solid rgba(0,196,106,0.2);
+  border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  font-family: var(--mono);
+  color: var(--green);
+}
+
+/* ─── CONVERTER PANEL ────────────────────── */
+.converter {
+  margin: 0 14px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Amount row */
+.conv-amount-row {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.conv-amount-label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 7px;
+}
+.conv-amount-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -moz-appearance: textfield;
+}
+.conv-amount-input::-webkit-inner-spin-button,
+.conv-amount-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.conv-amount-input:focus {
+  border-color: rgba(0,196,106,0.4);
+  box-shadow: 0 0 0 3px rgba(0,196,106,0.08);
+}
+.conv-amount-input::placeholder { color: rgba(255,255,255,0.15); }
+
+/* Currency selectors row */
+.conv-pair-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.conv-select-wrap {
+  flex: 1;
+  position: relative;
+}
+.conv-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  padding: 9px 28px 9px 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.conv-select:focus { border-color: rgba(0,196,106,0.4); }
+.conv-select-wrap::after {
+  content: '▾';
+  position: absolute; right: 9px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim); font-size: 11px;
+  pointer-events: none;
+}
+
+/* Swap button */
+.swap-btn {
+  width: 34px; height: 34px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-dim);
+  transition: all 0.18s;
+  flex-shrink: 0;
+  margin: 0 10px;
+}
+.swap-btn:hover {
+  background: var(--green-dim);
+  border-color: rgba(0,196,106,0.3);
+  color: var(--green);
+  transform: rotate(180deg);
+}
+
+/* Convert button */
+.conv-btn-row {
+  padding: 12px 14px;
+}
+.conv-btn {
+  width: 100%;
+  padding: 11px;
+  background: var(--green);
+  color: #001a0e;
+  border: none;
+  border-radius: 9px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+  letter-spacing: -0.1px;
+}
+.conv-btn:hover {
+  background: #00e07a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,196,106,0.3);
+}
+.conv-btn:active { transform: translateY(0); }
+.conv-btn:disabled {
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.conv-btn.loading {
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+/* ─── RESULT PANEL ───────────────────────── */
+.result-panel {
+  margin: 10px 14px 0;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: none;
+  animation: resultIn 0.3s cubic-bezier(0.22,1,0.36,1) both;
+}
+.result-panel.show { display: block; }
+@keyframes resultIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.result-main {
+  padding: 16px 16px 14px;
+  background: linear-gradient(135deg, rgba(0,196,106,0.06) 0%, transparent 60%);
+  border-bottom: 1px solid var(--border);
+}
+
+.result-from {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.result-from-flag { font-size: 14px; }
+.result-from-amount { color: var(--text-mid); font-weight: 500; }
+
+.result-converted {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.result-amount {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--green);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.result-code {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-mid);
+}
+
+/* Rate row */
+.result-rate {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.rate-equation {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.rate-age {
+  font-size: 10px;
+  color: rgba(0,196,106,0.5);
+  font-family: var(--mono);
+}
+
+/* Action buttons */
+.result-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.action-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.action-clear {
+  background: rgba(255,92,92,0.08);
+  color: var(--danger);
+  border: 1px solid rgba(255,92,92,0.2);
+}
+.action-clear:hover { background: rgba(255,92,92,0.14); }
+
+.action-chain {
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid rgba(0,196,106,0.2);
+}
+.action-chain:hover {
+  background: rgba(0,196,106,0.2);
+  box-shadow: 0 2px 8px rgba(0,196,106,0.15);
+}
+
+/* ─── HISTORY ────────────────────────────── */
+.history-list {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  margin: 10px 14px 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.history-list.show { display: flex; }
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  animation: histItemIn 0.25s ease both;
+}
+@keyframes histItemIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.history-item:last-child { border-bottom: none; }
+.hist-from { color: var(--text-dim); font-family: var(--mono); }
+.hist-arrow { color: var(--text-dim); margin: 0 5px; }
+.hist-to { color: var(--green); font-family: var(--mono); font-weight: 500; }
+.hist-rate { font-size: 10px; color: var(--text-dim); font-family: var(--mono); margin-left: auto; padding-left: 8px; }
+
+/* ─── BOTTOM ROW ─────────────────────────── */
+.bottom-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+}
+.settings-btn {
+  flex: 1;
+  padding: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: all 0.15s;
+}
+.settings-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); border-color: rgba(255,255,255,0.16); }
+
+/* Attribution */
+.attribution {
+  padding: 0 14px 10px;
+  text-align: center;
+  font-size: 9px;
+  color: rgba(255,255,255,0.2);
+}
+.attribution a { color: rgba(0,196,106,0.45); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">
+      <img src="icons/icon48.png" alt="FX"/>
+    </div>
+    <div>
+      <div class="logo-name">Forex Hover Pro</div>
+      <div class="logo-sub">Instant price conversion</div>
+    </div>
+  </div>
+  <label class="toggle" title="Enable / disable extension">
+    <input type="checkbox" id="toggle-enabled"/>
+    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+  </label>
+</div>
+
+<!-- ── Status ── -->
+<div class="status-bar">
+  <div class="status-dot" id="status-dot"></div>
+  <span class="status-text" id="status-text">Active on this page</span>
+</div>
+
+<!-- ── API warning ── -->
+<div class="api-warning" id="api-warning">⚠ No API key set — open Settings → Setup Guide.</div>
+
+<!-- ── Active target currencies ── -->
+<div class="divider">
+  <span class="divider-label">Hover targets</span>
+  <div class="divider-line"></div>
+</div>
+<div class="curr-chips" id="curr-chips"></div>
+
+<!-- ── Converter ── -->
+<div class="divider">
+  <span class="divider-label">Manual converter</span>
+  <div class="divider-line"></div>
+</div>
+
+<div class="converter">
+  <!-- Amount input -->
+  <div class="conv-amount-row">
+    <div class="conv-amount-label">Amount</div>
+    <input
+      class="conv-amount-input"
+      id="conv-amount"
+      type="number"
+      placeholder="0"
+      min="0"
+      step="any"
+      autocomplete="off"
+    />
+  </div>
+
+  <!-- From / Swap / To -->
+  <div class="conv-pair-row">
+    <div class="conv-select-wrap">
+      <select class="conv-select" id="conv-from"></select>
+    </div>
+    <button class="swap-btn" id="swap-btn" title="Swap currencies">⇄</button>
+    <div class="conv-select-wrap">
+      <select class="conv-select" id="conv-to"></select>
+    </div>
+  </div>
+
+  <!-- Convert button -->
+  <div class="conv-btn-row">
+    <button class="conv-btn" id="conv-btn">Convert</button>
+  </div>
+</div>
+
+<!-- ── Result panel ── -->
+<div class="result-panel" id="result-panel">
+  <div class="result-main">
+    <div class="result-from">
+      <span class="result-from-flag" id="res-from-flag"></span>
+      <span class="result-from-amount" id="res-from-amount"></span>
+    </div>
+    <div class="result-converted">
+      <span class="result-amount" id="res-amount"></span>
+      <span class="result-code" id="res-code"></span>
+    </div>
+  </div>
+  <div class="result-rate">
+    <span class="rate-equation" id="res-rate-eq"></span>
+    <span class="rate-age" id="res-rate-age"></span>
+  </div>
+  <div class="result-actions">
+    <button class="action-btn action-clear" id="res-clear">✕ Clear</button>
+    <button class="action-btn action-chain" id="res-chain">↺ Convert again</button>
+  </div>
+</div>
+
+<!-- ── Conversion history ── -->
+<div class="history-list" id="history-list"></div>
+
+<!-- ── Bottom row ── -->
+<div class="bottom-row">
+  <button class="settings-btn" id="open-settings">⚙️ Full Settings</button>
+</div>
+
+<div class="attribution">Rates by <a href="https://www.exchangerate-api.com" target="_blank">ExchangeRate-API</a></div>
+
+<script src="popup.js"></script>
+</body>
+</html>
