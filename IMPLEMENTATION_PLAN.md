@@ -160,7 +160,7 @@ flowchart TD
 
 **Completion criteria:** Commands and required runtime versions are documented in README; no UI/framework dependency is added.
 
-### [ ] M1-T3: Capture executable regression fixtures for current behavior
+### [x] M1-T3: Capture executable regression fixtures for current behavior
 
 **Objective:** Turn audit evidence into tests before refactoring.
 
