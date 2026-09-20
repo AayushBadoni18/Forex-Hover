@@ -62,6 +62,8 @@ export const CURRENCIES = [
 
 export type CurrencyCode = (typeof CURRENCIES)[number]["code"];
 
+export const CURRENCY_CODES = CURRENCIES.map(({ code }) => code) as CurrencyCode[];
+
 export const CURRENCY_BY_CODE = Object.fromEntries(
   CURRENCIES.map((currency) => [currency.code, currency])
 ) as Record<CurrencyCode, (typeof CURRENCIES)[number]>;

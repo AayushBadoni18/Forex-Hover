@@ -233,7 +233,7 @@ flowchart TD
 
 **Completion criteria:** The service-worker migration can route only validated contracts.
 
-### [ ] M2-T3: Replace the master regex with a tokenizer/parser
+### [x] M2-T3: Replace the master regex with a tokenizer/parser
 
 **Objective:** Correct the core product behavior across agreed price formats.
 

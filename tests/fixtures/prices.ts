@@ -1,7 +1,9 @@
+import type { CurrencyCode } from "../../src/shared/currencies.ts";
+
 export interface ExpectedPrice {
   raw: string;
   amount: number;
-  currency: string;
+  currency: CurrencyCode;
   index: number;
   length: number;
 }
@@ -13,7 +15,7 @@ export interface PriceFixture {
   legacyFails?: string;
 }
 
-const price = (raw: string, amount: number, currency: string, index = 0): ExpectedPrice => ({
+const price = (raw: string, amount: number, currency: CurrencyCode, index = 0): ExpectedPrice => ({
   raw,
   amount,
   currency,
