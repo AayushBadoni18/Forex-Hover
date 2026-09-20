@@ -4,6 +4,17 @@ Instant, contextual currency conversion while browsing—without leaving the pag
 
 > Upgrade status: v3 implementation is in progress. See [PROJECT_AUDIT.md](PROJECT_AUDIT.md) and [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
+## Development
+
+Requires Node.js 24+ and npm 11.6.2.
+
+```sh
+npm ci --ignore-scripts
+npm run check
+```
+
+The build is written to the ignored `dist/` directory, which can be loaded as an unpacked Chrome extension.
+
 ## Problem
 
 International shopping, travel research, and global software pricing repeatedly force users to copy a price, open a converter, choose currencies, and return to the original page. Forex Hover Pro keeps that context in place: point at or select a price and see the amount in currencies you understand.

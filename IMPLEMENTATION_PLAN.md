@@ -144,7 +144,7 @@ flowchart TD
 
 **Completion criteria:** Baseline commit exists and does not contain a live credential.
 
-### [ ] M1-T2: Add the minimum TypeScript/build/test toolchain
+### [x] M1-T2: Add the minimum TypeScript/build/test toolchain
 
 **Objective:** Establish repeatable local commands without changing runtime behavior.
 
