@@ -201,7 +201,7 @@ flowchart TD
 
 ## Milestone 2 — Domain model, parser, and settings correctness
 
-### [ ] M2-T1: Create the canonical currency catalog
+### [x] M2-T1: Create the canonical currency catalog
 
 **Objective:** Replace four drifting lists with one source of truth.
 
