@@ -82,7 +82,54 @@ Hover over — or select — any price on any webpage, and it instantly shows th
 
 ## Installation
 
-Requires Node.js 24+.
+Forex Hover Pro isn't on the Chrome Web Store yet, so you install it yourself. It takes about two minutes and needs **no account and no API key**. These steps work in Google Chrome, and in Edge, Brave or Arc (which use the same engine).
+
+### Option 1 — Download and install (no coding needed)
+
+**Step 1. Download the extension**
+
+1. Go to the [**Releases page**](https://github.com/AayushBadoni18/Forex-Hover/releases/latest).
+2. Under **Assets**, click **`forex-hover-pro-v3.0.0.zip`** to download it.
+
+**Step 2. Unzip it**
+
+- **Windows:** right-click the downloaded file → **Extract All…** → **Extract**.
+- **Mac:** double-click the downloaded file.
+
+You now have a folder named `forex-hover-pro-v3.0.0`. Move it somewhere you'll keep it, such as your Documents folder. **Don't delete it later**: Chrome loads the extension from this folder.
+
+**Step 3. Open Chrome's extensions page**
+
+Type `chrome://extensions` into the address bar and press **Enter**.
+(Edge: `edge://extensions` · Brave: `brave://extensions`)
+
+**Step 4. Turn on Developer mode**
+
+Flip the **Developer mode** switch in the top-right corner of the page. In Edge it's in the left sidebar.
+
+**Step 5. Load the extension**
+
+1. Click **Load unpacked**, the button that appears at the top-left.
+2. Select the **`forex-hover-pro-v3.0.0`** folder from Step 2. Select the folder itself, not a file inside it.
+3. Click **Select Folder**.
+
+Forex Hover Pro now appears in your list of extensions.
+
+**Step 6. Pin it to your toolbar**
+
+Click the 🧩 puzzle-piece icon at the top-right of Chrome, then click the 📌 pin next to **Forex Hover Pro**.
+
+**Step 7. Try it**
+
+1. Open any shopping site (for example amazon.com) and **hover your mouse over a price**. A glass card appears with the price in other currencies.
+2. Click the Forex Hover Pro icon in your toolbar to use the converter.
+3. In the converter, click **Settings** to pick your currencies (for example add INR or JPY) and to customise the look.
+
+> **Tip:** pages that were already open before you installed need a refresh (F5) before prices are detected.
+
+### Option 2 — Build from source (for developers)
+
+You'll need [Git](https://git-scm.com/downloads) and [Node.js 24+](https://nodejs.org/).
 
 ```sh
 git clone https://github.com/AayushBadoni18/Forex-Hover.git
@@ -91,11 +138,26 @@ npm ci --ignore-scripts
 npm run build
 ```
 
-1. Open `chrome://extensions` and enable **Developer mode**.
-2. Click **Load unpacked** and select the `dist/` folder.
-3. Open any website and hover a price. That's it — no API key needed.
+Then follow Steps 3–7 above, selecting the generated **`dist`** folder in Step 5. After changing the code, run `npm run build` again and click the ↻ reload icon on the extension's card in `chrome://extensions`.
 
-A Chrome Web Store release is in progress.
+### Updating to a new version
+
+Download the new zip from Releases, unzip it over the old folder (replace the files), then click ↻ **reload** on Forex Hover Pro's card in `chrome://extensions`. Your settings are kept.
+
+### Uninstalling
+
+Open `chrome://extensions`, click **Remove** on Forex Hover Pro, then delete the folder.
+
+### Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| **Load unpacked** button is missing | Turn on **Developer mode** (Step 4). |
+| "Manifest file is missing or unreadable" | You picked the wrong folder. Pick the folder that **directly contains** `manifest.json`. |
+| Nothing happens when I hover a price | Refresh the page. Then check that the switch in the popup is on, and that the price isn't already in one of your chosen currencies. |
+| "Rates unavailable" | Check your internet connection. Once rates have loaded one time, they keep working offline (labelled *Offline*). |
+| Chrome shows a "Disable developer mode extensions" warning at startup | That's normal for extensions not installed from the Web Store. Click the × to dismiss it. |
+| Flags show as letters such as "US" | Windows doesn't include flag emoji. Everything else works normally. |
 
 ## Usage
 
