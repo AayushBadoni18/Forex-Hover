@@ -39,7 +39,8 @@ export type RuntimeMessage =
   | { type: "GET_RATES_MULTI"; base: CurrencyCode; targets: CurrencyCode[] }
   | { type: "SET_ENABLED"; value: boolean }
   | { type: "SET_TARGET_CURRENCIES"; value: CurrencyCode[] }
-  | { type: "PIN_PRICE"; price: WorkspaceRecord };
+  | { type: "PIN_PRICE"; price: WorkspaceRecord }
+  | { type: "OPEN_OPTIONS" };
 
 export type ErrorCode =
   | "NETWORK"

@@ -30,14 +30,14 @@ async function getJson(fetchFn: Fetch, url: string): Promise<any> {
   return response.json();
 }
 
-/** Primary: ExchangeRate-API open endpoint (keyless, attribution required). */
+/** Fallback: ExchangeRate-API open endpoint (keyless; attribution shown when used). */
 async function fromOpenErApi(fetchFn: Fetch, base: CurrencyCode) {
   const data = await getJson(fetchFn, `https://open.er-api.com/v6/latest/${base}`);
   if (data?.result !== "success") throw new Error("PROVIDER");
   return { rates: pickRates(data.rates, (code) => code), source: "open-er-api" as const };
 }
 
-/** Fallback: fawazahmed0 currency-api on jsDelivr (keyless, 200+ currencies). */
+/** Primary: fawazahmed0 currency-api on jsDelivr (keyless, free, no attribution required). */
 async function fromCurrencyApi(fetchFn: Fetch, base: CurrencyCode) {
   const key = base.toLowerCase();
   const data = await getJson(
@@ -50,9 +50,9 @@ async function fromCurrencyApi(fetchFn: Fetch, base: CurrencyCode) {
 export async function fetchSnapshot(base: CurrencyCode, fetchFn: Fetch = fetch, now = Date.now()) {
   let result;
   try {
-    result = await fromOpenErApi(fetchFn, base);
-  } catch {
     result = await fromCurrencyApi(fetchFn, base);
+  } catch {
+    result = await fromOpenErApi(fetchFn, base);
   }
   const snapshot: RateSnapshot = {
     base,

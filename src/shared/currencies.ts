@@ -79,3 +79,10 @@ export const SYMBOL_TO_CODES = CURRENCIES.reduce<Record<string, CurrencyCode[]>>
 export function isCurrencyCode(value: unknown): value is CurrencyCode {
   return typeof value === "string" && Object.hasOwn(CURRENCY_BY_CODE, value);
 }
+
+/** Lower-case flag region for a currency ("us", "eu", "in"), read from its flag emoji. */
+export function flagRegion(code: CurrencyCode): string {
+  return [...CURRENCY_BY_CODE[code].flag]
+    .map((c) => String.fromCharCode(c.codePointAt(0)! - 0x1f1e6 + 97))
+    .join("");
+}

@@ -12,7 +12,7 @@ const memoryStore = () => {
 };
 
 const json = (body: unknown, ok = true) => ({ ok, status: ok ? 200 : 500, json: async () => body }) as Response;
-const primary = json({ result: "success", rates: { USD: 1, EUR: 0.9, INR: 84, BOGUS: 3, GBP: -1 } });
+const primary = json({ usd: { usd: 1, eur: 0.9, inr: 84, bogus: 3, gbp: -1 } });
 
 test("one request per base, deduplicated and cached", async () => {
   let calls = 0;
@@ -28,9 +28,9 @@ test("one request per base, deduplicated and cached", async () => {
 
 test("falls back to the secondary provider", async () => {
   const fetchFn = (async (url: string) =>
-    url.includes("open.er-api") ? json({}, false) : json({ usd: { eur: 0.91 } })) as typeof fetch;
+    url.includes("jsdelivr") ? json({}, false) : json({ result: "success", rates: { EUR: 0.91 } })) as typeof fetch;
   const { snapshot } = await createRateCache(memoryStore(), fetchFn)("USD");
-  assert.equal(snapshot.source, "currency-api");
+  assert.equal(snapshot.source, "open-er-api");
   assert.equal(snapshot.rates.EUR, 0.91);
 });
 

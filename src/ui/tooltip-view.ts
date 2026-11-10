@@ -1,6 +1,7 @@
-import { CURRENCY_BY_CODE } from "../shared/currencies.ts";
+import { CURRENCY_BY_CODE, isCurrencyCode } from "../shared/currencies.ts";
 import { formatMoney } from "../shared/format.ts";
-import { ageLabel, countUp, h } from "./dom.ts";
+import { ageLabel, h } from "./dom.ts";
+import { flag, FLAG_CSS } from "./flag.ts";
 
 /** Tooltip styles shared by the page tooltip and the settings preview. */
 export const TOOLTIP_CSS = `
@@ -9,46 +10,63 @@ export const TOOLTIP_CSS = `
 .pop {
   zoom: var(--ui-scale, 1);
   opacity: 0;
-  transform: translateY(8px) scale(0.92);
+  transform: translateY(4px) scale(0.92);
   transform-origin: top left;
-  transition: opacity 0.18s var(--ease), transform 0.45s var(--spring);
+  filter: blur(4px);
+  transition: opacity 0.18s var(--ease), transform 0.42s cubic-bezier(0.2, 1.2, 0.35, 1), filter 0.22s var(--ease);
 }
-.pop.up { transform-origin: bottom left; transform: translateY(-8px) scale(0.92); }
-.pop.visible { opacity: 1; transform: none; }
-.card { min-width: 248px; max-width: 360px; padding: 14px 14px 10px; font-size: 13px; line-height: 1.35; }
-.badge {
-  display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px;
-  font-size: 10.5px; font-weight: 600; letter-spacing: 0.2px; color: var(--fg-2);
-  padding: 3px 8px; border-radius: 999px; background: var(--fill);
+.pop.up { transform-origin: bottom left; transform: translateY(-4px) scale(0.92); }
+.pop.visible { opacity: 1; transform: none; filter: none; }
+/* Thick glass: a clear, refracting lens rim around a frosted reading plate.
+   interpolate-size lets the card morph smoothly from loading to result. */
+.tt-card {
+  width: 280px; padding: 16px 18px 12px; font-size: 13px; line-height: 1.32;
+  interpolate-size: allow-keywords; height: auto; overflow: hidden;
+  transition: height 0.32s cubic-bezier(0.2, 1, 0.35, 1);
 }
-.head { display: flex; align-items: baseline; gap: 8px; padding: 0 2px 10px; }
-.from { font-size: 21px; font-weight: 650; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; }
-.chip {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.6px; color: var(--fg-2);
-  padding: 2px 7px; border-radius: 999px; border: 1px solid var(--hairline);
+/* Thick glass: the outer band stays clear so the page visibly bends through
+   it; the reading plate inside is lightly frosted and fades in from the rim. */
+.tt-plate {
+  z-index: 1; inset: 7px; border-radius: calc(var(--lg-radius) - 7px);
+  background: rgb(28 28 30 / max(var(--lg-tint-a), 0.5));
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  --feather: 12px;
+  -webkit-mask:
+    linear-gradient(to right, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent),
+    linear-gradient(to bottom, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
-.rows { display: flex; flex-direction: column; gap: 2px; }
-.row {
-  display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px;
-  padding: 7px 8px; border-radius: 12px; background: var(--fill);
-  animation: rowIn 0.5s var(--spring) both; animation-delay: calc(var(--i) * 40ms);
-}
-.flag { font-size: 17px; line-height: 1; }
-.code { font-size: 12px; font-weight: 650; letter-spacing: 0.3px; }
-.name { font-size: 10.5px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.val { text-align: right; }
-.amount { font-size: 15px; font-weight: 650; letter-spacing: -0.2px; color: var(--accent-text); font-variant-numeric: tabular-nums; }
-.rate { font-size: 10px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
-.na { font-size: 11px; color: var(--fg-3); text-align: right; }
-.foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 4px 0; font-size: 10px; color: var(--fg-3); }
-.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 5px; box-shadow: 0 0 8px var(--accent); }
-.dot.stale { background: #ff9f0a; box-shadow: 0 0 8px #ff9f0a; }
-.skel { height: 34px; border-radius: 12px; background: linear-gradient(90deg, var(--fill) 0%, var(--fill-2) 50%, var(--fill) 100%); background-size: 200% 100%; animation: shimmer 1.1s linear infinite; }
-.skel.short { height: 22px; width: 55%; margin-bottom: 10px; }
-.err { padding: 4px 2px 6px; color: #ff6961; font-size: 12.5px; }
-@keyframes rowIn { from { opacity: 0; transform: translateY(6px) scale(0.97); } }
-@keyframes shimmer { to { background-position: -200% 0; } }
+[data-theme="light"] .tt-plate { background: rgb(255 255 255 / max(var(--lg-tint-a), 0.64)); }
+.lg-spec { z-index: 2; }
+.tt-head { display: flex; align-items: center; gap: 12px; }
+.tt-from { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.tt-note { margin-top: 4px; font-size: 11.5px; color: var(--fg-2); }
+.tt-badge { font-size: 11px; color: var(--fg-2); margin-bottom: 4px; }
+.tt-rows { margin-top: 9px; border-top: 0.5px solid var(--hairline); }
+.tt-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 0.5px solid var(--hairline); }
+.tt-row:last-child { border-bottom: 0; }
+.tt-row .flag, .tt-head .flag { width: 26px; height: 19px; border-radius: 4.5px; }
+.tt-amount { font-size: 17px; font-weight: 700; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+.tt-rate { font-size: 12px; font-weight: 500; color: var(--fg-2); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tt-na { font-size: 13px; color: var(--fg-3); }
+.tt-foot { display: flex; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 0.5px solid var(--hairline); font-size: 11px; color: var(--fg-2); }
+.tt-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #30d158; margin-right: 5px; vertical-align: 1px; }
+.tt-dot.tt-stale { background: #ff9f0a; }
+.tt-skel { height: 14px; border-radius: 7px; background: var(--fill); margin: 10px 0; }
+.tt-skel.tt-wide { height: 22px; width: 60%; margin-top: 2px; }
+.tt-err { padding: 2px 0 4px; color: #ff453a; font-size: 13px; }
+${FLAG_CSS}
 `;
+
+const REASONS: Record<string, string> = {
+  "domain-override": "your site rule",
+  "document-region": "this page's language",
+  "hostname-region": "this site's country",
+  "user-default": "your home currency",
+  "first-candidate": "the most common use"
+};
 
 export interface ResultView {
   amount: number;
@@ -57,40 +75,60 @@ export interface ResultView {
   isSelection?: boolean;
   stale?: boolean;
   source?: string;
-  instant?: boolean;
+  reason?: string;
 }
 
-export function buildResult({ amount, originalCurrency, rates, isSelection, stale, source, instant = false }: ResultView) {
+const money = (n: number, code: string) => (isCurrencyCode(code) ? formatMoney(n, code) : `${n.toFixed(2)} ${code}`);
+
+/** Frosted inner plate for the thick-glass look; call after mountGlass(). */
+export function addPlate(card: HTMLElement) {
+  const plate = h("span", { class: "lg-layer tt-plate", "aria-hidden": "true" });
+  card.querySelector(".lg-spec")?.before(plate);
+  return plate;
+}
+
+export function buildLoading() {
+  return [h("div", { class: "tt-skel tt-wide" }), h("div", { class: "tt-skel" }), h("div", { class: "tt-skel" })];
+}
+
+export function buildResult({ amount, originalCurrency, rates, isSelection, stale, source, reason }: ResultView) {
   const entries = Object.entries(rates);
   const timestamps = entries.flatMap(([, r]) => (r.success && r.timestamp ? [r.timestamp] : []));
   const isStale = stale || entries.some(([, r]) => r.stale);
-  const money = (n: number, code: string) => formatMoney(n, code as never);
+  const assumed = reason && REASONS[reason];
 
-  const rows = entries.map(([code, entry], i) => {
-    const meta = (CURRENCY_BY_CODE as Record<string, { flag: string; name: string } | undefined>)[code];
-    const label = h("div", {}, h("div", { class: "code" }, code), h("div", { class: "name" }, meta?.name ?? ""));
-    const flag = h("span", { class: "flag" }, meta?.flag ?? "🌐");
+  // Words like "INR / Indian Rupee" are replaced by the flag and the currency's
+  // own symbol; the full name stays available to screen readers and on hover.
+  const nameOf = (code: string) => (isCurrencyCode(code) ? CURRENCY_BY_CODE[code].name : code);
+  const symbolOf = (code: string) => (isCurrencyCode(code) ? CURRENCY_BY_CODE[code].symbol : code);
+  const namedFlag = (code: string) => {
+    const img = flag(code);
+    img.alt = nameOf(code);
+    img.title = nameOf(code);
+    return img;
+  };
+
+  const rows = entries.map(([code, entry]) => {
     if (!entry.success || !entry.rate) {
-      return h("div", { class: "row", style: `--i:${i}` }, flag, label, h("div", { class: "na" }, "unavailable"));
+      return h("div", { class: "tt-row", title: nameOf(code) }, namedFlag(code), h("div", { class: "tt-na" }, "Unavailable"));
     }
-    const amountEl = h("div", { class: "amount" });
-    countUp(amountEl, amount * entry.rate, (n) => money(n, code), instant);
-    return h("div", { class: "row", style: `--i:${i}` }, flag, label,
-      h("div", { class: "val" }, amountEl, h("div", { class: "rate" }, `1 ${originalCurrency} = ${entry.rate.toPrecision(5)}`))
+    const converted = money(amount * entry.rate, code);
+    return h("div", { class: "tt-row", title: nameOf(code), "aria-label": `${nameOf(code)}: ${converted}` },
+      namedFlag(code),
+      h("div", { class: "tt-amount" }, converted),
+      h("div", { class: "tt-rate" }, `${symbolOf(originalCurrency)}1 = ${symbolOf(code)}${entry.rate.toPrecision(4)}`)
     );
   });
 
   const updated = timestamps.length ? ageLabel(Math.max(...timestamps)) : "";
   return [
-    isSelection ? h("div", { class: "badge" }, "✂︎ Selection") : null,
-    h("div", { class: "head" },
-      h("span", { class: "from" }, money(amount, originalCurrency)),
-      h("span", { class: "chip" }, originalCurrency)
-    ),
-    h("div", { class: "rows" }, ...rows),
-    h("div", { class: "foot" },
-      h("span", {}, h("span", { class: `dot${isStale ? " stale" : ""}` }), isStale ? `Offline · rates from ${updated}` : `Reference rate · ${updated}`),
-      h("span", {}, source === "currency-api" ? "fawazahmed0/currency-api" : "Rates by ExchangeRate-API")
+    isSelection ? h("div", { class: "tt-badge" }, "Selected text") : null,
+    h("div", { class: "tt-head", title: nameOf(originalCurrency) }, namedFlag(originalCurrency), h("span", { class: "tt-from" }, money(amount, originalCurrency))),
+    assumed ? h("div", { class: "tt-note" }, `Read as ${symbolOf(originalCurrency)} from ${assumed}`) : null,
+    h("div", { class: "tt-rows" }, ...rows),
+    h("div", { class: "tt-foot" },
+      h("span", {}, h("span", { class: `tt-dot${isStale ? " tt-stale" : ""}` }), isStale ? `Offline · ${updated}` : `Updated ${updated}`),
+      h("span", {}, source === "open-er-api" ? "Rates by ExchangeRate-API" : "Daily reference rates")
     )
   ].filter((n) => n !== null);
 }
