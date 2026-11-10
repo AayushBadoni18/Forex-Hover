@@ -1,4 +1,4 @@
-import { cp, mkdir, rm } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { CURRENCIES, flagRegion } from "../src/shared/currencies.ts";
@@ -15,6 +15,7 @@ await build({
     background: "background.js",
     content: "content.js",
     options: "options.js",
+    panel: "panel.js",
     popup: "popup.js",
     tooltip: "tooltip.js"
   },
@@ -39,3 +40,14 @@ await Promise.all([
     cp(`${root}/node_modules/flag-icons/flags/4x3/${flagRegion(code)}.svg`, `${outdir}/flags/${flagRegion(code)}.svg`)
   )
 ]);
+
+// Licence notices for bundled third-party code and assets (required by MIT/OFL).
+const notices = [
+  ["liquid-glass-react (refraction technique)", "licenses/liquid-glass-react.txt"],
+  ["flag-icons (flag images)", "node_modules/flag-icons/LICENSE"],
+  ["Inter (typeface)", "node_modules/@fontsource-variable/inter/LICENSE"]
+];
+const sections = await Promise.all(
+  notices.map(async ([name, file]) => `== ${name} ==\n\n${await readFile(`${root}/${file}`, "utf8")}`)
+);
+await writeFile(`${outdir}/THIRD_PARTY_NOTICES.txt`, sections.join("\n\n"));

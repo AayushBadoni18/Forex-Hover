@@ -31,7 +31,7 @@ Hover over — or select — any price on any webpage, and it instantly shows th
 - 💱 **Multi-currency** — up to 10 target currencies at once, from a catalog of 50
 - 🔢 **Live popup converter** — converts as you type, searchable currency picker with flags, shows the amount in all your currencies
 - 🕘 **Recent conversions** — kept across popup sessions
-- 🔎 **Smart detection** — handles `1.200,50 €`, `₹1,23,456`, `CHF 1'234.50`, prices split across elements (Amazon-style) and prices that update live; ambiguous `$`/`¥`/`kr` are resolved from site rules, page language and the site's country, and the tooltip says when it assumed
+- 🔎 **Smart detection** — handles `1.200,50 €`, `₹1,23,456`, `CHF 1'234.50`, prices split across elements (Amazon-style), tiny or raised symbols, symbols on their own line or drawn by CSS, cents in superscript, and prices that update live; ambiguous `$`/`¥`/`kr` are resolved from site rules, page language and the site's country, and the tooltip says when it assumed
 - ✨ **Liquid Glass design** — Apple-inspired: lens refraction at the edges, a specular rim and subtle colour fringing, tunable in Settings (Clear / Regular / Frosted / Solid, sliders, light/dark/auto, accent colours) with a live, draggable preview
 - 🔑 **No API key** — keyless reference rates from ExchangeRate-API with an automatic fallback provider
 - 📴 **Works offline** — one cached snapshot per currency; when offline you see the last rates, clearly labelled
@@ -90,14 +90,14 @@ Forex Hover Pro isn't on the Chrome Web Store yet, so you install it yourself. I
 **Step 1. Download the extension**
 
 1. Go to the [**Releases page**](https://github.com/AayushBadoni18/Forex-Hover/releases/latest).
-2. Under **Assets**, click **`forex-hover-pro-v3.0.0.zip`** to download it.
+2. Under **Assets**, click **`forex-hover-pro-v3.1.0.zip`** to download it.
 
 **Step 2. Unzip it**
 
 - **Windows:** right-click the downloaded file → **Extract All…** → **Extract**.
 - **Mac:** double-click the downloaded file.
 
-You now have a folder named `forex-hover-pro-v3.0.0`. Move it somewhere you'll keep it, such as your Documents folder. **Don't delete it later**: Chrome loads the extension from this folder.
+You now have a folder named `forex-hover-pro-v3.1.0`. Move it somewhere you'll keep it, such as your Documents folder. **Don't delete it later**: Chrome loads the extension from this folder.
 
 **Step 3. Open Chrome's extensions page**
 
@@ -111,7 +111,7 @@ Flip the **Developer mode** switch in the top-right corner of the page. In Edge 
 **Step 5. Load the extension**
 
 1. Click **Load unpacked**, the button that appears at the top-left.
-2. Select the **`forex-hover-pro-v3.0.0`** folder from Step 2. Select the folder itself, not a file inside it.
+2. Select the **`forex-hover-pro-v3.1.0`** folder from Step 2. Select the folder itself, not a file inside it.
 3. Click **Select Folder**.
 
 Forex Hover Pro now appears in your list of extensions.
@@ -123,7 +123,7 @@ Click the 🧩 puzzle-piece icon at the top-right of Chrome, then click the 📌
 **Step 7. Try it**
 
 1. Open any shopping site (for example amazon.com) and **hover your mouse over a price**. A glass card appears with the price in other currencies.
-2. Click the Forex Hover Pro icon in your toolbar to use the converter.
+2. Click the Forex Hover Pro icon in your toolbar: a glass converter opens on the page. Drag it by its header; click the icon again to close it.
 3. In the converter, click **Settings** to pick your currencies (for example add INR or JPY) and to customise the look.
 
 > **Tip:** pages that were already open before you installed need a refresh (F5) before prices are detected.
@@ -164,8 +164,8 @@ Open `chrome://extensions`, click **Remove** on Forex Hover Pro, then delete the
 
 - **Hover mode** — prices on pages are detected automatically; hover one to see conversions.
 - **Selection mode** — select any text containing a price.
-- **Popup** — click the toolbar icon for the live converter and your recent conversions.
-- **Settings** — choose currencies, tune the glass appearance, toggle selection/underline, and add site rules. Everything saves automatically and applies live in open tabs.
+- **Floating converter** — click the toolbar icon to open a Liquid Glass converter right on the page; drag it anywhere by its header, and click the icon again (or press Esc) to close it. On Chrome's own pages (New Tab, `chrome://`) it opens in a small window instead.
+- **Settings** — choose currencies, tune the glass (presets, sliders, Background art, Clear liquid mode), toggle selection/underline, and add site rules. Everything saves automatically and applies live in open tabs.
 
 ## Development
 

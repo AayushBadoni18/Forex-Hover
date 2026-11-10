@@ -33,7 +33,7 @@ test("the unpacked extension starts and renders its settings surfaces", async (t
   assert.match(extensionId, /^[a-p]{32}$/);
 
   for (const [path, selector] of [
-    ["popup.html", "#amount"],
+    ["popup.html", ".amount"],
     ["options.html", "#all .row"]
   ] as const) {
     const page = await browser.newPage();

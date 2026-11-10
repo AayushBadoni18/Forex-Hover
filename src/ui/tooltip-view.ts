@@ -10,29 +10,48 @@ export const TOOLTIP_CSS = `
 .pop {
   zoom: var(--ui-scale, 1);
   opacity: 0;
-  transform: scale(0.98);
+  transform: translateY(4px) scale(0.92);
   transform-origin: top left;
-  transition: opacity 0.14s var(--ease), transform 0.14s var(--ease);
+  filter: blur(4px);
+  transition: opacity 0.18s var(--ease), transform 0.42s cubic-bezier(0.2, 1.2, 0.35, 1), filter 0.22s var(--ease);
 }
-.pop.up { transform-origin: bottom left; }
-.pop.visible { opacity: 1; transform: none; }
-.tt-card { width: 272px; padding: 12px 14px 10px; font-size: 13px; line-height: 1.3; }
-.tt-head { display: flex; align-items: center; gap: 8px; }
-.tt-from { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.tt-code-chip { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--fg-2); letter-spacing: 0.02em; }
-.tt-note { margin-top: 3px; font-size: 11px; color: var(--fg-2); }
+.pop.up { transform-origin: bottom left; transform: translateY(-4px) scale(0.92); }
+.pop.visible { opacity: 1; transform: none; filter: none; }
+/* Thick glass: a clear, refracting lens rim around a frosted reading plate.
+   interpolate-size lets the card morph smoothly from loading to result. */
+.tt-card {
+  width: 280px; padding: 16px 18px 12px; font-size: 13px; line-height: 1.32;
+  interpolate-size: allow-keywords; height: auto; overflow: hidden;
+  transition: height 0.32s cubic-bezier(0.2, 1, 0.35, 1);
+}
+/* Thick glass: the outer band stays clear so the page visibly bends through
+   it; the reading plate inside is lightly frosted and fades in from the rim. */
+.tt-plate {
+  z-index: 1; inset: 7px; border-radius: calc(var(--lg-radius) - 7px);
+  background: rgb(28 28 30 / max(var(--lg-tint-a), 0.5));
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  --feather: 12px;
+  -webkit-mask:
+    linear-gradient(to right, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent),
+    linear-gradient(to bottom, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+[data-theme="light"] .tt-plate { background: rgb(255 255 255 / max(var(--lg-tint-a), 0.64)); }
+.lg-spec { z-index: 2; }
+.tt-head { display: flex; align-items: center; gap: 12px; }
+.tt-from { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.tt-note { margin-top: 4px; font-size: 11.5px; color: var(--fg-2); }
 .tt-badge { font-size: 11px; color: var(--fg-2); margin-bottom: 4px; }
-.tt-rows { margin-top: 8px; border-top: 0.5px solid var(--hairline); }
-.tt-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--hairline); }
+.tt-rows { margin-top: 9px; border-top: 0.5px solid var(--hairline); }
+.tt-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 0.5px solid var(--hairline); }
 .tt-row:last-child { border-bottom: 0; }
-.tt-label { min-width: 0; flex: 1; }
-.tt-code { font-size: 13px; font-weight: 600; }
-.tt-name { font-size: 11px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tt-val { text-align: right; }
-.tt-amount { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
-.tt-rate { font-size: 10.5px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
-.tt-na { font-size: 12px; color: var(--fg-3); }
-.tt-foot { display: flex; justify-content: space-between; gap: 8px; padding-top: 7px; border-top: 0.5px solid var(--hairline); font-size: 10.5px; color: var(--fg-3); }
+.tt-row .flag, .tt-head .flag { width: 26px; height: 19px; border-radius: 4.5px; }
+.tt-amount { font-size: 17px; font-weight: 700; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+.tt-rate { font-size: 12px; font-weight: 500; color: var(--fg-2); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tt-na { font-size: 13px; color: var(--fg-3); }
+.tt-foot { display: flex; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 0.5px solid var(--hairline); font-size: 11px; color: var(--fg-2); }
 .tt-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #30d158; margin-right: 5px; vertical-align: 1px; }
 .tt-dot.tt-stale { background: #ff9f0a; }
 .tt-skel { height: 14px; border-radius: 7px; background: var(--fill); margin: 10px 0; }
@@ -61,6 +80,13 @@ export interface ResultView {
 
 const money = (n: number, code: string) => (isCurrencyCode(code) ? formatMoney(n, code) : `${n.toFixed(2)} ${code}`);
 
+/** Frosted inner plate for the thick-glass look; call after mountGlass(). */
+export function addPlate(card: HTMLElement) {
+  const plate = h("span", { class: "lg-layer tt-plate", "aria-hidden": "true" });
+  card.querySelector(".lg-spec")?.before(plate);
+  return plate;
+}
+
 export function buildLoading() {
   return [h("div", { class: "tt-skel tt-wide" }), h("div", { class: "tt-skel" }), h("div", { class: "tt-skel" })];
 }
@@ -71,25 +97,34 @@ export function buildResult({ amount, originalCurrency, rates, isSelection, stal
   const isStale = stale || entries.some(([, r]) => r.stale);
   const assumed = reason && REASONS[reason];
 
+  // Words like "INR / Indian Rupee" are replaced by the flag and the currency's
+  // own symbol; the full name stays available to screen readers and on hover.
+  const nameOf = (code: string) => (isCurrencyCode(code) ? CURRENCY_BY_CODE[code].name : code);
+  const symbolOf = (code: string) => (isCurrencyCode(code) ? CURRENCY_BY_CODE[code].symbol : code);
+  const namedFlag = (code: string) => {
+    const img = flag(code);
+    img.alt = nameOf(code);
+    img.title = nameOf(code);
+    return img;
+  };
+
   const rows = entries.map(([code, entry]) => {
-    const meta = isCurrencyCode(code) ? CURRENCY_BY_CODE[code] : undefined;
-    const label = h("div", { class: "tt-label" }, h("div", { class: "tt-code" }, code), h("div", { class: "tt-name" }, meta?.name ?? ""));
     if (!entry.success || !entry.rate) {
-      return h("div", { class: "tt-row" }, flag(code), label, h("div", { class: "tt-na" }, "Unavailable"));
+      return h("div", { class: "tt-row", title: nameOf(code) }, namedFlag(code), h("div", { class: "tt-na" }, "Unavailable"));
     }
-    return h("div", { class: "tt-row" }, flag(code), label,
-      h("div", { class: "tt-val" },
-        h("div", { class: "tt-amount" }, money(amount * entry.rate, code)),
-        h("div", { class: "tt-rate" }, `1 ${originalCurrency} = ${entry.rate.toPrecision(5)}`)
-      )
+    const converted = money(amount * entry.rate, code);
+    return h("div", { class: "tt-row", title: nameOf(code), "aria-label": `${nameOf(code)}: ${converted}` },
+      namedFlag(code),
+      h("div", { class: "tt-amount" }, converted),
+      h("div", { class: "tt-rate" }, `${symbolOf(originalCurrency)}1 = ${symbolOf(code)}${entry.rate.toPrecision(4)}`)
     );
   });
 
   const updated = timestamps.length ? ageLabel(Math.max(...timestamps)) : "";
   return [
     isSelection ? h("div", { class: "tt-badge" }, "Selected text") : null,
-    h("div", { class: "tt-head" }, flag(originalCurrency), h("span", { class: "tt-from" }, money(amount, originalCurrency)), h("span", { class: "tt-code-chip" }, originalCurrency)),
-    assumed ? h("div", { class: "tt-note" }, `Read as ${originalCurrency} from ${assumed}`) : null,
+    h("div", { class: "tt-head", title: nameOf(originalCurrency) }, namedFlag(originalCurrency), h("span", { class: "tt-from" }, money(amount, originalCurrency))),
+    assumed ? h("div", { class: "tt-note" }, `Read as ${symbolOf(originalCurrency)} from ${assumed}`) : null,
     h("div", { class: "tt-rows" }, ...rows),
     h("div", { class: "tt-foot" },
       h("span", {}, h("span", { class: `tt-dot${isStale ? " tt-stale" : ""}` }), isStale ? `Offline · ${updated}` : `Updated ${updated}`),

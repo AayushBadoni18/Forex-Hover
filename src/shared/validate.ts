@@ -66,6 +66,8 @@ export function isRuntimeMessage(value: unknown): value is RuntimeMessage {
       return typeof value.value === "boolean";
     case "SET_TARGET_CURRENCIES":
       return isCurrencyList(value.value);
+    case "OPEN_OPTIONS":
+      return Object.keys(value).length === 1;
     case "PIN_PRICE":
       return isWorkspaceRecord(value.price);
     default:

@@ -7,9 +7,9 @@
 import { DEFAULT_APPEARANCE } from "./src/ui/appearance.ts";
 import { h } from "./src/ui/dom.ts";
 import { applyAppearance, GLASS_CSS, mountGlass } from "./src/ui/glass.ts";
-import { buildLoading, buildResult, TOOLTIP_CSS } from "./src/ui/tooltip-view.ts";
+import { addPlate, buildLoading, buildResult, TOOLTIP_CSS } from "./src/ui/tooltip-view.ts";
 
-window.ForexTooltip = (() => {
+window.ForexTooltip ??= (() => {
   let host = null;
   let root = null;
   let pop = null;
@@ -25,9 +25,10 @@ window.ForexTooltip = (() => {
     host = document.createElement("div");
     host.setAttribute("data-fhp-host", "true");
     // @font-face is ignored inside shadow roots, so declare the bundled font on the page.
-    const font = document.createElement("style");
-    font.textContent = `@font-face{font-family:"FHP Inter";src:url("${chrome.runtime.getURL("fonts/inter.woff2")}") format("woff2");font-weight:100 900;font-display:swap}`;
-    (document.head || document.documentElement).append(font);
+    const font = document.getElementById("fhp-font") ? null : document.createElement("style");
+    if (font) font.id = "fhp-font";
+    if (font) font.textContent = `@font-face{font-family:"FHP Inter";src:url("${chrome.runtime.getURL("fonts/inter.woff2")}") format("woff2");font-weight:100 900;font-display:swap}`;
+    if (font) (document.head || document.documentElement).append(font);
     const shadow = host.attachShadow({ mode: "closed" });
     shadow.append(h("style", {}, GLASS_CSS + TOOLTIP_CSS));
     body = h("div");
@@ -36,18 +37,18 @@ window.ForexTooltip = (() => {
     root = h("div", { class: "root" }, pop);
     shadow.append(root);
     document.documentElement.appendChild(host);
-    applyAppearance(root, onPage(appearance));
-    glass = mountGlass(card, appearance);
+    applyAppearance(root, appearance);
+    glass = mountGlass(card, appearance, { bezel: 24 });
+    addPlate(card);
+    // The card morphs height between states; re-place it once it settles.
+    card.addEventListener("transitionend", (e) => e.propertyName === "height" && position());
     card.dataset.lgPaused = "1";
   }
-
-  // Over arbitrary pages the tooltip needs more body than the panels do.
-  const onPage = (a) => ({ ...a, tint: Math.min(0.85, a.tint + 0.3) });
 
   function setAppearance(next) {
     appearance = next;
     if (!root) return;
-    applyAppearance(root, onPage(appearance));
+    applyAppearance(root, appearance);
     glass.update(appearance);
   }
 

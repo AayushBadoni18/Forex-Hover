@@ -109,6 +109,8 @@ export const GLASS_CSS = `
 export function applyAppearance(root: HTMLElement, a: Appearance, theme = resolveTheme(a.theme)) {
   root.dataset.theme = theme;
   root.dataset.motion = a.motion ? "on" : "off";
+  root.dataset.liquid = a.liquid ? "on" : "off";
+  root.dataset.wallpaper = a.wallpaper ? "on" : "off";
   const set = (k: string, v: string) => root.style.setProperty(k, v);
   set("--lg-blur", `${a.blur}px`);
   set("--lg-sat", `${a.saturation}%`);
@@ -244,7 +246,11 @@ export interface GlassController {
   destroy(): void;
 }
 
-export function mountGlass(el: HTMLElement, initial: Appearance, { interactive = false } = {}): GlassController {
+/**
+ * @param options.bezel fixed lens width in px (overrides the depth setting),
+ *   e.g. a narrow strong rim for small floating cards.
+ */
+export function mountGlass(el: HTMLElement, initial: Appearance, { interactive = false, bezel = 0 } = {}): GlassController {
   let a = initial;
   const id = `fhp-lg-${Math.random().toString(36).slice(2, 8)}-${uid++}`;
   el.classList.add("lg");
@@ -267,7 +273,9 @@ export function mountGlass(el: HTMLElement, initial: Appearance, { interactive =
   });
   svgEl("feBlend", { in: "G", in2: "B", mode: "screen", result: "GB" }, filter);
   svgEl("feBlend", { in: "R", in2: "GB", mode: "screen", result: "RGB" }, filter);
-  svgEl("feComposite", { in: "RGB", in2: "MASK", operator: "in", result: "EDGE" }, filter);
+  // Soften the split channels so dispersion reads as a smooth fringe, not specks.
+  svgEl("feGaussianBlur", { in: "RGB", stdDeviation: 0.6, result: "RGBS" }, filter);
+  svgEl("feComposite", { in: "RGBS", in2: "MASK", operator: "in", result: "EDGE" }, filter);
   svgEl("feComposite", { in: "EDGE", in2: "DG", operator: "over" }, filter);
   el.prepend(warp, svg, spec, layer("lg-shine"));
 
@@ -288,11 +296,12 @@ export function mountGlass(el: HTMLElement, initial: Appearance, { interactive =
     // Layout size, not getBoundingClientRect: transforms would skew the map.
     const width = el.offsetWidth;
     const height = el.offsetHeight;
-    const key = `${width}x${height}:${a.radius}:${a.depth}`;
+    const depth = bezel ? bezel / Math.max(1, Math.min(width, height)) : a.depth;
+    const key = `${width}x${height}:${a.radius}:${depth}`;
     if (key === built) return;
     built = key;
-    const maps = buildMaps(width, height, a.radius, a.depth);
-    maxScale = foldFreeScale(bezelWidth(width, height, a.depth));
+    const maps = buildMaps(width, height, a.radius, depth);
+    maxScale = foldFreeScale(bezelWidth(width, height, depth));
     setScales();
     ready = !!maps && (await canUseDataImages(maps.mask));
     if (!maps || !ready) {
@@ -396,6 +405,8 @@ export function mountGlass(el: HTMLElement, initial: Appearance, { interactive =
       if (!animating()) return;
       boost = 0.1;
       boostTarget = 1;
+      // Shimmer: the highlight sweeps round the rim as the lens forms.
+      angle = (angleTarget + 200) % 360;
       kick();
     },
     destroy() {

@@ -18,6 +18,10 @@ export interface Appearance {
   scale: number;
   accent: (typeof ACCENTS)[number];
   motion: boolean;
+  /** Wallpaper behind the settings page and the fallback converter window. */
+  wallpaper: boolean;
+  /** Clear liquid mode: panels stay fully clear; frost only behind text. */
+  liquid: boolean;
 }
 
 /** Slider ranges: [min, max, step]. Also the clamp bounds for stored values. */
@@ -47,7 +51,9 @@ export const DEFAULT_APPEARANCE: Appearance = {
   radius: 22,
   scale: 1,
   accent: "#0a84ff",
-  motion: true
+  motion: true,
+  wallpaper: true,
+  liquid: false
 };
 
 export const PRESETS: Record<string, Partial<Appearance>> = {
@@ -68,7 +74,9 @@ export function normalizeAppearance(raw: unknown): Appearance {
     list.includes(value as T) ? (value as T) : fallback;
   out.theme = pick(THEMES, input.theme, out.theme);
   out.accent = pick(ACCENTS, input.accent, out.accent);
-  if (typeof input.motion === "boolean") out.motion = input.motion;
+  for (const key of ["motion", "wallpaper", "liquid"] as const) {
+    if (typeof input[key] === "boolean") out[key] = input[key];
+  }
   return out;
 }
 

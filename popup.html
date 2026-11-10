@@ -6,144 +6,20 @@
 <title>Forex Hover Pro</title>
 <link rel="stylesheet" href="popup.css" />
 <style>
-  /* The popup is one rounded window: a margin of plain canvas around a rounded wallpaper. */
-  html { background: var(--canvas); }
-  body { width: 352px; margin: 6px; border-radius: 26px; overflow: hidden; position: relative; isolation: isolate; }
-  .wallpaper { position: absolute; border-radius: inherit; }
+  /* Fallback converter window, for pages where the floating panel can't open (chrome://, New Tab, Web Store). */
+  body { min-height: 100vh; padding: 12px; }
+  .cv { max-width: 380px; margin: 0 auto; }
   .wallpaper .w1 { top: 92px; left: -36px; }
   .wallpaper .w2 { top: 204px; left: 170px; }
   .wallpaper .w3 { top: 330px; right: -40px; }
-  .wallpaper .w4 { top: 470px; left: -50px; }
   .wallpaper .w5 { top: 20px; right: -30px; }
-  main { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
-
-  .bar { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; }
-  .bar .grow { flex: 1; min-width: 0; }
-  .bar h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.015em; }
-  .bar p { margin: 0; font-size: 12px; color: var(--fg-2); }
-
-  .conv { padding: 6px 16px 12px; }
-  .line { display: flex; align-items: center; gap: 10px; min-height: 58px; }
-  .cur {
-    display: inline-flex; align-items: center; gap: 8px; border: 0; background: var(--fill); border-radius: 999px;
-    padding: 6px 10px 6px 8px; font-size: 15px; font-weight: 600; cursor: pointer; flex: none; transition: background-color 0.15s var(--ease);
-  }
-  .cur:hover { background: var(--fill-2); }
-  .cur:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .cur svg { opacity: 0.5; }
-  #amount, #result {
-    flex: 1; min-width: 0; text-align: right; font-size: 30px; font-weight: 600; letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums; border: 0; outline: 0; background: none; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  #amount::placeholder { color: var(--fg-3); }
-  #amount::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
-  #result { color: var(--accent-text); }
-  .divider { position: relative; height: 0; border-top: 0.5px solid var(--hairline); }
-  #swap {
-    position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); width: 30px; height: 30px; padding: 0;
-    border-radius: 50%; border: 0; background: var(--fill-2); backdrop-filter: blur(8px);
-    display: grid; place-items: center; cursor: pointer; z-index: 4; transition: transform 0.25s var(--ease);
-  }
-  #swap:hover { transform: translate(-50%, -50%) rotate(180deg); }
-  #swap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 8px; border-top: 0.5px solid var(--hairline); font-size: 12px; color: var(--fg-2); }
-  .err { color: #ff453a; font-size: 12px; padding-top: 6px; }
-
-  .list-head { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px 3px; }
-  .list-head h2 { margin: 0; font-size: 12px; font-weight: 600; color: var(--fg-2); text-transform: uppercase; letter-spacing: 0.03em; }
-  .row .num { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .row .text b { font-weight: 600; }
-  button.row { width: 100%; border: 0; background: none; text-align: left; cursor: pointer; border-radius: 12px; }
-  button.row:hover { background: var(--fill); }
-  button.row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .hist-row .text { color: var(--fg-2); font-variant-numeric: tabular-nums; }
-  .empty { padding: 10px 16px 14px; color: var(--fg-3); }
-  .foot { padding: 2px 8px 4px; font-size: 11.5px; color: var(--fg-3); text-align: center; }
-  .foot a { color: inherit; }
-
-  /* Currency picker sheet */
-  .sheet { position: absolute; inset: 0; z-index: 10; background: rgba(0,0,0,0.2); display: flex; align-items: flex-end; padding: 10px; border-radius: inherit; }
-  .sheet[hidden] { display: none; }
-  .sheet-card { width: 100%; max-height: 80%; display: flex; flex-direction: column; padding: 12px 10px 6px; animation: rise 0.2s var(--ease); }
-  @keyframes rise { from { transform: translateY(14px); opacity: 0; } }
-  .sheet-head { display: flex; gap: 10px; align-items: center; padding: 0 4px 8px; }
-  .picker-list { overflow-y: auto; padding-bottom: 4px; }
-  .pick { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 9px 8px; border-radius: 10px; cursor: pointer; text-align: left; }
-  .pick:hover, .pick:focus-visible { background: var(--fill); outline: 0; }
-  .pick b { font-weight: 600; width: 40px; }
-  .pick span { color: var(--fg-2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pick[aria-selected="true"]::after { content: "✓"; color: var(--accent-text); font-weight: 600; }
 </style>
 </head>
 <body>
 <div class="wallpaper" aria-hidden="true">
   <i class="shape-ring w5"></i><i class="shape-pill w1"></i><i class="shape-bar w2"></i><i class="shape-sun w3"></i>
 </div>
-<main>
-  <header class="glass panel bar">
-    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
-      <defs><linearGradient id="logo-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a84ff"/><stop offset="1" stop-color="#30d158"/></linearGradient></defs>
-      <g fill="none" stroke="url(#logo-g)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M6.5 13.5A9.8 9.8 0 0 1 23.6 8"/><path d="M24.4 3.6v4.8h-4.8"/>
-        <path d="M25.5 18.5A9.8 9.8 0 0 1 8.4 24"/><path d="M7.6 28.4v-4.8h4.8"/>
-      </g>
-      <text x="16" y="20.2" text-anchor="middle" font-size="11.5" font-weight="700" fill="currentColor" font-family="inherit">¤</text>
-    </svg>
-    <div class="grow">
-      <h1>Forex Hover</h1>
-      <p id="status">On for web pages</p>
-    </div>
-    <label class="switch" title="Convert prices on web pages">
-      <input type="checkbox" id="toggle-enabled" role="switch" aria-label="Convert prices on web pages" />
-      <span></span>
-    </label>
-    <button class="icon-btn" id="open-settings" title="Settings" aria-label="Settings">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
-    </button>
-  </header>
-
-  <section class="glass panel conv" aria-label="Converter">
-    <div class="line">
-      <button class="cur" id="from" aria-haspopup="listbox" aria-label="From currency"></button>
-      <label for="amount" class="sr-only">Amount</label>
-      <input id="amount" inputmode="decimal" autocomplete="off" placeholder="0" value="100" />
-    </div>
-    <div class="divider">
-      <button id="swap" aria-label="Swap currencies">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v10M1.5 4.5 4 2l2.5 2.5M10 12V2M7.5 9.5 10 12l2.5-2.5"/></svg>
-      </button>
-    </div>
-    <div class="line">
-      <button class="cur" id="to" aria-haspopup="listbox" aria-label="To currency"></button>
-      <output id="result" aria-live="polite">—</output>
-    </div>
-    <div class="meta"><span id="rate">&nbsp;</span><button class="link" id="copy">Copy</button></div>
-    <div class="err" id="error" hidden></div>
-  </section>
-
-  <section class="glass panel group" aria-label="Your currencies">
-    <div class="list-head"><h2>Your currencies</h2></div>
-    <div id="also"></div>
-  </section>
-
-  <section class="glass panel group" aria-label="Recent conversions">
-    <div class="list-head"><h2>Recent</h2><button class="link" id="clear-history">Clear</button></div>
-    <div id="history"></div>
-  </section>
-
-  <footer class="foot" id="source">Daily reference rates</footer>
-</main>
-
-<div class="sheet" id="picker" hidden>
-  <div class="sheet-card glass panel" role="dialog" aria-modal="true" aria-label="Choose currency">
-    <div class="sheet-head">
-      <label for="picker-search" class="sr-only">Search currencies</label>
-      <input class="search" id="picker-search" placeholder="Search" autocomplete="off" />
-      <button class="link" id="picker-close">Done</button>
-    </div>
-    <div class="picker-list" id="picker-list" role="listbox"></div>
-  </div>
-</div>
+<main id="app"></main>
 <script src="popup.js"></script>
 </body>
 </html>

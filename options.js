@@ -9,10 +9,11 @@ import { normalizeDomain } from "./src/shared/currency-resolver.ts";
 import { ACCENTS, DEFAULT_APPEARANCE, normalizeAppearance, PRESETS, RANGES, THEMES } from "./src/ui/appearance.ts";
 import { h } from "./src/ui/dom.ts";
 import { flag } from "./src/ui/flag.ts";
+import { CONTROLS_CSS } from "./src/ui/controls.ts";
 import { applyAppearance, GLASS_CSS, mountGlass } from "./src/ui/glass.ts";
-import { buildResult, TOOLTIP_CSS } from "./src/ui/tooltip-view.ts";
+import { addPlate, buildResult, TOOLTIP_CSS } from "./src/ui/tooltip-view.ts";
 
-document.head.append(h("style", {}, GLASS_CSS + TOOLTIP_CSS));
+document.head.append(h("style", {}, GLASS_CSS + CONTROLS_CSS + TOOLTIP_CSS));
 const $ = (id) => document.getElementById(id);
 
 const SLIDERS = [
@@ -122,11 +123,12 @@ const markPressed = (container, value) => {
   for (const b of container.children) b.setAttribute("aria-pressed", String(b.dataset.value === value));
 };
 const matchingPreset = () => Object.keys(PRESETS).find((name) =>
-  Object.entries({ ...DEFAULT_APPEARANCE, ...PRESETS[name] }).every(([k, v]) => ["theme", "accent", "motion", "radius", "scale", "elasticity"].includes(k) || appearance[k] === v)
+  Object.entries({ ...DEFAULT_APPEARANCE, ...PRESETS[name] }).every(([k, v]) => ["theme", "accent", "motion", "radius", "scale", "elasticity", "wallpaper", "liquid"].includes(k) || appearance[k] === v)
 );
 
 segmented($("presets"), Object.keys(PRESETS), "Material", (name) => {
-  const keep = { theme: appearance.theme, accent: appearance.accent, motion: appearance.motion, radius: appearance.radius, scale: appearance.scale, elasticity: appearance.elasticity };
+  const { theme, accent, motion, radius, scale, elasticity, wallpaper, liquid } = appearance;
+  const keep = { theme, accent, motion, radius, scale, elasticity, wallpaper, liquid };
   setAppearance({ ...DEFAULT_APPEARANCE, ...PRESETS[name], ...keep });
 });
 segmented($("theme"), THEMES, "Theme", (theme) => setAppearance({ ...appearance, theme }), (v) => ({ auto: "Automatic", light: "Light", dark: "Dark" })[v]);
@@ -143,7 +145,9 @@ $("sliders").replaceChildren(...SLIDERS.map(([key, title, help]) => {
     h("div", { class: "slider-ctl" }, input, h("output", { id: `${id}-out`, for: id }))
   );
 }));
-$("motion").addEventListener("change", (e) => setAppearance({ ...appearance, motion: e.target.checked }));
+for (const key of ["motion", "wallpaper", "liquid"]) {
+  $(key).addEventListener("change", (e) => setAppearance({ ...appearance, [key]: e.target.checked }));
+}
 $("reset").addEventListener("click", () => setAppearance(DEFAULT_APPEARANCE));
 
 function syncAppearanceControls() {
@@ -155,7 +159,7 @@ function syncAppearanceControls() {
     if (Number(input.value) !== appearance[key]) input.value = String(appearance[key]);
     $(`s-${key}-out`).textContent = fmt(appearance[key]);
   }
-  $("motion").checked = appearance.motion;
+  for (const key of ["motion", "wallpaper", "liquid"]) $(key).checked = appearance[key];
 }
 
 async function loadPreviewRates() {
@@ -258,8 +262,9 @@ $("add-site").addEventListener("submit", (e) => {
   $("version").textContent = chrome.runtime.getManifest().version;
 
   setAppearance(data.appearance, false);
-  glasses = [...document.querySelectorAll(".glass")].map((el) => mountGlass(el, appearance));
-  glasses.push(mountGlass($("preview"), appearance));
+  glasses = [...document.querySelectorAll(".glass")].map((el) => mountGlass(el, appearance, { bezel: 26 }));
+  glasses.push(mountGlass($("preview"), appearance, { bezel: 24 }));
+  addPlate($("preview"));
   renderCurrencies();
   renderSites();
   renderPreview();
