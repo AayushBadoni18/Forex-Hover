@@ -74,7 +74,7 @@ export function isRuntimeMessage(value: unknown): value is RuntimeMessage {
 }
 
 export function isRateSnapshot(value: unknown): value is RateSnapshot {
-  if (!isRecord(value) || !isCurrencyCode(value.base) || value.source !== "frankfurter") return false;
+  if (!isRecord(value) || !isCurrencyCode(value.base) || !["open-er-api", "currency-api"].includes(value.source as string)) return false;
   if (!Number.isFinite(value.fetchedAt) || !Number.isFinite(value.expiresAt)) return false;
   if ((value.expiresAt as number) < (value.fetchedAt as number) || !isRecord(value.rates)) return false;
   const rates = Object.entries(value.rates);

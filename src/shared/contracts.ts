@@ -11,7 +11,7 @@ export interface RateSnapshot {
   rates: Partial<Record<CurrencyCode, number>>;
   fetchedAt: number;
   expiresAt: number;
-  source: "frankfurter";
+  source: "open-er-api" | "currency-api";
 }
 
 export interface Settings {

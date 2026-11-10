@@ -1,353 +1,216 @@
 /**
- * popup.js — Forex Hover Pro (Final)
- *
- * Handles:
- *  - Extension toggle (enable/disable)
- *  - Active hover-target currency chips display
- *  - Manual converter: amount + from/to dropdowns → result panel
- *  - Swap currencies button
- *  - "Convert again" chaining: pipes result into next conversion
- *  - Session history of last 5 conversions
+ * popup.js — Forex Hover Pro popup: live converter, all-target preview,
+ * persistent recent conversions, Liquid Glass surfaces.
  */
+import "./src/ui/backdrop.css";
+import { CURRENCIES, CURRENCY_BY_CODE, isCurrencyCode } from "./src/shared/currencies.ts";
+import { formatAmount, formatMoney } from "./src/shared/format.ts";
+import { normalizeAppearance } from "./src/ui/appearance.ts";
+import { ageLabel, countUp, h, prefersReducedMotion } from "./src/ui/dom.ts";
+import { applyAppearance, GLASS_CSS, mountGlass } from "./src/ui/glass.ts";
 
-// ─── Currency master list ─────────────────────────────────────────────────────
-const CURRENCIES = [
-  { code:"USD", name:"US Dollar",           flag:"🇺🇸" },
-  { code:"EUR", name:"Euro",                flag:"🇪🇺" },
-  { code:"GBP", name:"British Pound",       flag:"🇬🇧" },
-  { code:"JPY", name:"Japanese Yen",        flag:"🇯🇵" },
-  { code:"INR", name:"Indian Rupee",        flag:"🇮🇳" },
-  { code:"KRW", name:"Korean Won",          flag:"🇰🇷" },
-  { code:"AUD", name:"Australian Dollar",   flag:"🇦🇺" },
-  { code:"CAD", name:"Canadian Dollar",     flag:"🇨🇦" },
-  { code:"CHF", name:"Swiss Franc",         flag:"🇨🇭" },
-  { code:"CNY", name:"Chinese Yuan",        flag:"🇨🇳" },
-  { code:"MXN", name:"Mexican Peso",        flag:"🇲🇽" },
-  { code:"BRL", name:"Brazilian Real",      flag:"🇧🇷" },
-  { code:"SGD", name:"Singapore Dollar",    flag:"🇸🇬" },
-  { code:"HKD", name:"Hong Kong Dollar",    flag:"🇭🇰" },
-  { code:"NOK", name:"Norwegian Krone",     flag:"🇳🇴" },
-  { code:"SEK", name:"Swedish Krona",       flag:"🇸🇪" },
-  { code:"NZD", name:"New Zealand Dollar",  flag:"🇳🇿" },
-  { code:"ZAR", name:"South African Rand",  flag:"🇿🇦" },
-  { code:"AED", name:"UAE Dirham",          flag:"🇦🇪" },
-  { code:"DKK", name:"Danish Krone",        flag:"🇩🇰" },
-  { code:"PLN", name:"Polish Złoty",        flag:"🇵🇱" },
-  { code:"TRY", name:"Turkish Lira",        flag:"🇹🇷" },
-  { code:"THB", name:"Thai Baht",           flag:"🇹🇭" },
-  { code:"MYR", name:"Malaysian Ringgit",   flag:"🇲🇾" },
-  { code:"IDR", name:"Indonesian Rupiah",   flag:"🇮🇩" },
-  { code:"PHP", name:"Philippine Peso",     flag:"🇵🇭" },
-  { code:"SAR", name:"Saudi Riyal",         flag:"🇸🇦" },
-  { code:"QAR", name:"Qatari Riyal",        flag:"🇶🇦" },
-  { code:"KWD", name:"Kuwaiti Dinar",       flag:"🇰🇼" },
-  { code:"ILS", name:"Israeli Shekel",      flag:"🇮🇱" },
-  { code:"EGP", name:"Egyptian Pound",      flag:"🇪🇬" },
-  { code:"PKR", name:"Pakistani Rupee",     flag:"🇵🇰" },
-  { code:"BDT", name:"Bangladeshi Taka",    flag:"🇧🇩" },
-  { code:"CLP", name:"Chilean Peso",        flag:"🇨🇱" },
-  { code:"COP", name:"Colombian Peso",      flag:"🇨🇴" },
-  { code:"ARS", name:"Argentine Peso",      flag:"🇦🇷" },
-];
+const MAX_HISTORY = 8;
+const $ = (id) => document.getElementById(id);
+const el = {
+  toggle: $("toggle-enabled"), status: $("status"), amount: $("amount"), from: $("from"), to: $("to"),
+  swap: $("swap"), resAmount: $("res-amount"), resRate: $("res-rate"), also: $("also"), error: $("error"),
+  copy: $("copy"), chain: $("chain"), history: $("history"), clearHistory: $("clear-history")
+};
 
-// ─── DOM refs ─────────────────────────────────────────────────────────────────
-const toggleEl     = document.getElementById("toggle-enabled");
-const statusDot    = document.getElementById("status-dot");
-const statusText   = document.getElementById("status-text");
-const apiWarning   = document.getElementById("api-warning");
-const currChips    = document.getElementById("curr-chips");
-const openSettings = document.getElementById("open-settings");
+document.head.append(h("style", {}, GLASS_CSS));
+let appearance = normalizeAppearance(null);
+let glasses = [];
+let targets = ["USD", "EUR", "GBP"];
+let history = [];
+let last = null; // { amount, from, to, value }
+let requestId = 0;
+let debounce = 0;
+let historyTimer = 0;
 
-const convAmount   = document.getElementById("conv-amount");
-const convFrom     = document.getElementById("conv-from");
-const convTo       = document.getElementById("conv-to");
-const swapBtn      = document.getElementById("swap-btn");
-const convBtn      = document.getElementById("conv-btn");
-
-const resultPanel  = document.getElementById("result-panel");
-const resFromFlag  = document.getElementById("res-from-flag");
-const resFromAmt   = document.getElementById("res-from-amount");
-const resAmount    = document.getElementById("res-amount");
-const resCode      = document.getElementById("res-code");
-const resRateEq    = document.getElementById("res-rate-eq");
-const resRateAge   = document.getElementById("res-rate-age");
-const resClear     = document.getElementById("res-clear");
-const resChain     = document.getElementById("res-chain");
-const historyList  = document.getElementById("history-list");
-
-// ─── State ────────────────────────────────────────────────────────────────────
-let targetCurrencies = ["USD", "EUR", "GBP"];
-let conversionHistory = []; // session-only, max 5
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function getCurrency(code) {
-  return CURRENCIES.find(c => c.code === code) || { code, flag: "🌐", name: code };
+function setAppearance(raw) {
+  appearance = normalizeAppearance(raw);
+  applyAppearance(document.documentElement, appearance);
+  glasses.forEach((g) => g.update(appearance));
 }
 
-function formatAmount(n, code) {
-  // Use locale formatting with sensible decimal places
-  const decimals = ["JPY","KRW","IDR","CLP","COP","VND"].includes(code) ? 0 : 2;
-  return n.toLocaleString("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+const instant = () => !appearance.motion || prefersReducedMotion();
+
+function parseAmount(text) {
+  const n = Number(String(text).replace(/[\s,_']/g, ""));
+  return Number.isFinite(n) && n > 0 && n < 1e15 ? n : null;
 }
 
-function ageString(timestampMs) {
-  const mins = Math.round((Date.now() - timestampMs) / 60000);
-  if (mins === 0) return "live";
-  if (mins === 1) return "1m ago";
-  return `${mins}m ago`;
+function fillSelect(select, value) {
+  select.replaceChildren(...CURRENCIES.map((c) => h("option", { value: c.code }, `${c.flag}  ${c.code}`)));
+  select.value = value;
 }
 
-// ─── Populate dropdowns ────────────────────────────────────────────────────────
-function populateSelects(fromCode = "USD", toCode = "INR") {
-  const options = CURRENCIES.map(c =>
-    `<option value="${c.code}">${c.flag} ${c.code} — ${c.name}</option>`
-  ).join("");
-
-  convFrom.innerHTML = options;
-  convTo.innerHTML   = options;
-
-  convFrom.value = fromCode;
-  convTo.value   = toCode;
+function setStatus(enabled) {
+  el.status.textContent = enabled ? "Active on pages" : "Paused";
+  el.status.classList.toggle("off", !enabled);
 }
 
-// ─── Load preferences ─────────────────────────────────────────────────────────
-async function loadPrefs() {
-  const data = await chrome.storage.sync.get(["enabled", "targetCurrencies", "targetCurrency"]);
-  const isEnabled = data.enabled !== false;
-  toggleEl.checked = isEnabled;
-  updateStatus(isEnabled);
-
-  if (data.targetCurrencies?.length) {
-    targetCurrencies = data.targetCurrencies;
-  } else if (data.targetCurrency) {
-    targetCurrencies = [data.targetCurrency];
-  }
-
-  renderChips();
-
-  // Pre-select "to" as first target currency if available
-  const defaultTo = targetCurrencies[0] || "EUR";
-  populateSelects("USD", defaultTo !== "USD" ? defaultTo : "EUR");
+async function getRates(base, wanted) {
+  const list = [...new Set(wanted)].filter((c) => c !== base).slice(0, 10);
+  if (!list.length) return { rates: {}, timestamp: Date.now() };
+  const res = await chrome.runtime.sendMessage({ type: "GET_RATES_MULTI", base, targets: list });
+  if (!res?.success) throw new Error(res?.error || "Rates unavailable");
+  return res;
 }
 
-function updateStatus(enabled) {
-  statusDot.className = "status-dot" + (enabled ? "" : " off");
-  statusText.textContent = enabled ? "Active on this page" : "Extension disabled";
-}
-
-function renderChips() {
-  if (!targetCurrencies.length) {
-    currChips.innerHTML = `<span style="font-size:11px;color:rgba(180,200,240,0.3);padding:0 0 4px">No targets set — open Settings</span>`;
+async function convert() {
+  const amount = parseAmount(el.amount.value);
+  const from = el.from.value;
+  const to = el.to.value;
+  el.error.hidden = true;
+  if (!amount) {
+    el.resAmount.textContent = "—";
+    el.resRate.textContent = "Enter an amount";
+    el.also.replaceChildren();
     return;
   }
-  currChips.innerHTML = targetCurrencies.map(code => {
-    const c = getCurrency(code);
-    return `<span class="curr-chip">${c.flag} ${code}</span>`;
-  }).join("");
-}
-
-// ─── Extension toggle ─────────────────────────────────────────────────────────
-toggleEl.addEventListener("change", async () => {
-  const enabled = toggleEl.checked;
-  await chrome.storage.sync.set({ enabled });
-  updateStatus(enabled);
+  const id = ++requestId;
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id) await chrome.tabs.sendMessage(tab.id, { type: "SET_ENABLED", value: enabled });
-  } catch {}
-});
+    const res = await getRates(from, [to, ...targets]);
+    if (id !== requestId) return; // a newer conversion superseded this one
+    const rateOf = (code) => (code === from ? 1 : res.rates[code]?.rate);
+    const rate = rateOf(to);
+    if (!rate) throw new Error("UNSUPPORTED_CURRENCY");
+    const value = amount * rate;
+    last = { amount, from, to, value };
+    countUp(el.resAmount, value, (n) => formatMoney(n, to), instant());
+    el.resRate.textContent = `1 ${from} = ${rate.toPrecision(5)} ${to} · ${res.stale ? "offline, " : ""}${ageLabel(res.timestamp)}`;
 
-// ─── Settings link ─────────────────────────────────────────────────────────────
-openSettings.addEventListener("click", () => chrome.runtime.openOptionsPage());
+    const others = targets.filter((c) => c !== to && c !== from && rateOf(c));
+    el.also.replaceChildren(...others.map((code, i) =>
+      h("button", { class: "also-row", style: `--i:${i}`, title: `Convert to ${code}`, onclick: () => { el.to.value = code; persistPair(); convert(); } },
+        h("span", {}, CURRENCY_BY_CODE[code].flag),
+        h("small", {}, `${code} · ${CURRENCY_BY_CODE[code].name}`),
+        h("b", {}, formatMoney(amount * rateOf(code), code))
+      )
+    ));
 
-// ─── Swap button ──────────────────────────────────────────────────────────────
-swapBtn.addEventListener("click", () => {
-  const tmp = convFrom.value;
-  convFrom.value = convTo.value;
-  convTo.value = tmp;
-  // If there's a result showing, hide it since the pair changed
-  hideResult();
-});
-
-// ─── Convert ──────────────────────────────────────────────────────────────────
-convBtn.addEventListener("click", runConversion);
-
-// Also allow Enter key in amount field
-convAmount.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") runConversion();
-});
-
-// Hide result when user changes pair or amount manually
-convFrom.addEventListener("change", hideResult);
-convTo.addEventListener("change", hideResult);
-convAmount.addEventListener("input", hideResult);
-
-async function runConversion() {
-  const raw = parseFloat(convAmount.value);
-  if (!raw || isNaN(raw) || raw <= 0) {
-    convAmount.focus();
-    convAmount.style.borderColor = "rgba(255,92,92,0.5)";
-    setTimeout(() => convAmount.style.borderColor = "", 1000);
-    return;
-  }
-
-  const from = convFrom.value;
-  const to   = convTo.value;
-
-  // Show loading state
-  convBtn.textContent = "Fetching rate…";
-  convBtn.classList.add("loading");
-  convBtn.disabled = true;
-
-  try {
-    let rate, timestamp;
-
-    if (from === to) {
-      rate = 1;
-      timestamp = Date.now();
-    } else {
-      const result = await chrome.runtime.sendMessage({
-        type: "GET_RATE",
-        base: from,
-        target: to,
-      });
-
-      if (!result.success) {
-        throw new Error(result.error || "Rate unavailable");
-      }
-
-      rate      = result.rate;
-      timestamp = result.timestamp;
-    }
-
-    const converted = raw * rate;
-    showResult({ raw, from, to, rate, converted, timestamp });
-    addToHistory({ raw, from, to, rate, converted });
-
+    clearTimeout(historyTimer);
+    historyTimer = setTimeout(() => addHistory(last), 1200);
   } catch (err) {
-    convBtn.textContent = err.message?.includes("API key")
-      ? "Add API key first"
-      : "Error — try again";
-    convBtn.style.background = "rgba(255,92,92,0.15)";
-    convBtn.style.color = "#ff8888";
-    setTimeout(() => resetConvBtn(), 2500);
-    return;
+    if (id !== requestId) return;
+    el.resAmount.textContent = "—";
+    el.resRate.textContent = "";
+    el.also.replaceChildren();
+    el.error.hidden = false;
+    el.error.textContent = err.message === "UNSUPPORTED_CURRENCY" ? "This pair isn't available right now." : "Couldn't reach the rate service. Check your connection.";
   }
-
-  resetConvBtn();
 }
 
-function resetConvBtn() {
-  convBtn.textContent = "Convert";
-  convBtn.classList.remove("loading");
-  convBtn.disabled = false;
-  convBtn.style.background = "";
-  convBtn.style.color = "";
+function scheduleConvert() {
+  clearTimeout(debounce);
+  debounce = setTimeout(convert, 180);
 }
 
-// ─── Show result ──────────────────────────────────────────────────────────────
-function showResult({ raw, from, to, rate, converted, timestamp }) {
-  const fromC = getCurrency(from);
-  const toC   = getCurrency(to);
-
-  resFromFlag.textContent  = fromC.flag;
-  resFromAmt.textContent   = `${formatAmount(raw, from)} ${from}`;
-  resAmount.textContent    = formatAmount(converted, to);
-  resCode.textContent      = to;
-  resRateEq.textContent    = `1 ${from} = ${rate.toFixed(4)} ${to}`;
-  resRateAge.textContent   = ageString(timestamp);
-
-  // Store for "convert again"
-  resultPanel.dataset.converted = converted;
-  resultPanel.dataset.to        = to;
-
-  resultPanel.classList.add("show");
+function persistPair() {
+  chrome.storage.local.set({ popupState: { from: el.from.value, to: el.to.value, amount: el.amount.value.slice(0, 20) } });
 }
 
-function hideResult() {
-  resultPanel.classList.remove("show");
-}
-
-// ─── Clear button ─────────────────────────────────────────────────────────────
-resClear.addEventListener("click", () => {
-  hideResult();
-  convAmount.value = "";
-  convAmount.focus();
-});
-
-// ─── "Convert again" — chain the result into the next conversion ──────────────
-resChain.addEventListener("click", () => {
-  const converted = parseFloat(resultPanel.dataset.converted);
-  const prevTo    = resultPanel.dataset.to;
-
-  // The result becomes the new input
-  convAmount.value = converted.toFixed(
-    ["JPY","KRW","IDR","CLP"].includes(prevTo) ? 0 : 2
-  );
-
-  // The previous target becomes the new "from"
-  convFrom.value = prevTo;
-
-  // Pick a new "to" — cycle to the next currency in the target list
-  // that isn't the same as the new "from"
-  const nextTarget = targetCurrencies.find(c => c !== prevTo);
-  if (nextTarget) {
-    convTo.value = nextTarget;
-  } else {
-    // Fallback: pick first currency that isn't "from"
-    const fallback = CURRENCIES.find(c => c.code !== prevTo);
-    if (fallback) convTo.value = fallback.code;
-  }
-
-  hideResult();
-
-  // Scroll amount into view and focus
-  convAmount.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  convAmount.focus();
-  convAmount.select();
-});
-
-// ─── History ──────────────────────────────────────────────────────────────────
-function addToHistory({ raw, from, to, rate, converted }) {
-  const fromC = getCurrency(from);
-  const toC   = getCurrency(to);
-
-  conversionHistory.unshift({ raw, from, to, rate, converted, fromC, toC });
-  if (conversionHistory.length > 5) conversionHistory.pop();
-
+// ─── History ──────────────────────────────────────────────────────────────
+function addHistory(entry) {
+  if (!entry) return;
+  const same = (h) => h.amount === entry.amount && h.from === entry.from && h.to === entry.to;
+  history = [{ ...entry, at: Date.now() }, ...history.filter((h) => !same(h))].slice(0, MAX_HISTORY);
+  chrome.storage.local.set({ history });
   renderHistory();
 }
 
 function renderHistory() {
-  if (conversionHistory.length === 0) {
-    historyList.classList.remove("show");
-    return;
-  }
-
-  historyList.classList.add("show");
-  historyList.innerHTML = conversionHistory.map((h, i) => `
-    <div class="history-item" style="animation-delay:${i * 0.04}s">
-      <span class="hist-from">${h.fromC.flag} ${formatAmount(h.raw, h.from)} ${h.from}</span>
-      <span class="hist-arrow">→</span>
-      <span class="hist-to">${h.toC.flag} ${formatAmount(h.converted, h.to)} ${h.to}</span>
-      <span class="hist-rate">@ ${h.rate.toFixed(4)}</span>
-    </div>
-  `).join("");
+  el.clearHistory.hidden = !history.length;
+  if (!history.length) return el.history.replaceChildren(h("div", { class: "empty" }, "Conversions you make show up here."));
+  el.history.replaceChildren(...history.map((item) =>
+    h("button", {
+      title: ageLabel(item.at),
+      onclick: () => {
+        el.amount.value = formatAmount(item.amount, item.from).replace(/,/g, "");
+        el.from.value = item.from;
+        el.to.value = item.to;
+        persistPair();
+        convert();
+      }
+    },
+      h("span", {}, `${CURRENCY_BY_CODE[item.from]?.flag ?? ""} ${formatMoney(item.amount, item.from)}`),
+      h("span", {}, `${formatMoney(item.value, item.to)} ${CURRENCY_BY_CODE[item.to]?.flag ?? ""}`)
+    )
+  ));
 }
 
-// ─── API key check ─────────────────────────────────────────────────────────────
-async function checkApiKey() {
-  try {
-    const result = await chrome.runtime.sendMessage({ type: "GET_RATE", base: "USD", target: "EUR" });
-    if (!result.success && result.error?.includes("API key")) {
-      apiWarning.classList.add("visible");
-    }
-  } catch {}
+function validHistory(list) {
+  return Array.isArray(list)
+    ? list.filter((x) => x && isCurrencyCode(x.from) && isCurrencyCode(x.to) && Number.isFinite(x.amount) && Number.isFinite(x.value)).slice(0, MAX_HISTORY)
+    : [];
 }
 
-// ─── Bootstrap ────────────────────────────────────────────────────────────────
-loadPrefs();
-checkApiKey();
+// ─── Events ───────────────────────────────────────────────────────────────
+el.amount.addEventListener("input", () => { persistPair(); scheduleConvert(); });
+el.amount.addEventListener("keydown", (e) => { if (e.key === "Enter") { clearTimeout(historyTimer); convert().then(() => addHistory(last)); } });
+el.from.addEventListener("change", () => { persistPair(); convert(); });
+el.to.addEventListener("change", () => { persistPair(); convert(); });
+el.swap.addEventListener("click", () => {
+  [el.from.value, el.to.value] = [el.to.value, el.from.value];
+  el.swap.classList.toggle("spin");
+  persistPair();
+  convert();
+});
+el.copy.addEventListener("click", async () => {
+  if (!last) return;
+  await navigator.clipboard.writeText(formatMoney(last.value, last.to));
+  el.copy.textContent = "Copied ✓";
+  setTimeout(() => (el.copy.textContent = "Copy"), 1200);
+});
+el.chain.addEventListener("click", () => {
+  if (!last) return;
+  el.amount.value = formatAmount(last.value, last.to).replace(/,/g, "");
+  el.from.value = last.to;
+  el.to.value = targets.find((c) => c !== last.to) ?? (last.to === "USD" ? "EUR" : "USD");
+  persistPair();
+  convert();
+  el.amount.focus();
+});
+el.clearHistory.addEventListener("click", () => {
+  history = [];
+  chrome.storage.local.set({ history });
+  renderHistory();
+});
+el.toggle.addEventListener("change", () => {
+  chrome.storage.sync.set({ enabled: el.toggle.checked });
+  setStatus(el.toggle.checked);
+});
+$("open-settings").addEventListener("click", () => chrome.runtime.openOptionsPage());
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes.appearance) setAppearance(changes.appearance.newValue);
+});
+
+// ─── Boot ─────────────────────────────────────────────────────────────────
+(async () => {
+  const [sync, local] = await Promise.all([
+    chrome.storage.sync.get(["enabled", "targetCurrencies", "targetCurrency", "appearance"]),
+    chrome.storage.local.get(["popupState", "history"])
+  ]);
+  setAppearance(sync.appearance);
+  glasses = [...document.querySelectorAll(".glass")].map((node) => mountGlass(node, appearance));
+
+  const enabled = sync.enabled !== false;
+  el.toggle.checked = enabled;
+  setStatus(enabled);
+  const saved = Array.isArray(sync.targetCurrencies) ? sync.targetCurrencies.filter(isCurrencyCode) : [];
+  if (saved.length) targets = saved;
+  else if (isCurrencyCode(sync.targetCurrency)) targets = [sync.targetCurrency];
+
+  const state = local.popupState ?? {};
+  const from = isCurrencyCode(state.from) ? state.from : "USD";
+  const to = isCurrencyCode(state.to) ? state.to : targets.find((c) => c !== from) ?? "EUR";
+  fillSelect(el.from, from);
+  fillSelect(el.to, to);
+  if (typeof state.amount === "string") el.amount.value = state.amount;
+  history = validHistory(local.history);
+  renderHistory();
+  convert();
+  el.amount.focus();
+  el.amount.select();
+})();

@@ -1,291 +1,239 @@
 /**
- * options.js — Forex Hover Pro (Final)
- * Settings page logic:
- *  - Multi-currency selection with live chip UI
- *  - Per-domain currency overrides
- *  - Behavior toggles
- *  (API key is configured directly in background.js — see Setup Guide)
+ * options.js — Forex Hover Pro settings. Everything autosaves to
+ * chrome.storage.sync; open tabs react through storage.onChanged.
  */
+import "./src/ui/backdrop.css";
+import { MAX_DOMAIN_OVERRIDES, MAX_TARGET_CURRENCIES } from "./src/shared/contracts.ts";
+import { CURRENCIES, CURRENCY_BY_CODE, isCurrencyCode } from "./src/shared/currencies.ts";
+import { ACCENTS, DEFAULT_APPEARANCE, MATERIALS, normalizeAppearance, PRESETS, RANGES, THEMES } from "./src/ui/appearance.ts";
+import { h, prefersReducedMotion } from "./src/ui/dom.ts";
+import { applyAppearance, GLASS_CSS, mountGlass } from "./src/ui/glass.ts";
+import { buildResult, TOOLTIP_CSS } from "./src/ui/tooltip-view.ts";
 
-// ── Currency Master List ────────────────────────────────────────────────────
-const ALL_CURRENCIES = [
-  { code:"USD", name:"US Dollar",          flag:"🇺🇸" },
-  { code:"EUR", name:"Euro",               flag:"🇪🇺" },
-  { code:"GBP", name:"British Pound",      flag:"🇬🇧" },
-  { code:"JPY", name:"Japanese Yen",       flag:"🇯🇵" },
-  { code:"INR", name:"Indian Rupee",       flag:"🇮🇳" },
-  { code:"KRW", name:"Korean Won",         flag:"🇰🇷" },
-  { code:"AUD", name:"Australian Dollar",  flag:"🇦🇺" },
-  { code:"CAD", name:"Canadian Dollar",    flag:"🇨🇦" },
-  { code:"CHF", name:"Swiss Franc",        flag:"🇨🇭" },
-  { code:"CNY", name:"Chinese Yuan",       flag:"🇨🇳" },
-  { code:"MXN", name:"Mexican Peso",       flag:"🇲🇽" },
-  { code:"BRL", name:"Brazilian Real",     flag:"🇧🇷" },
-  { code:"SGD", name:"Singapore Dollar",   flag:"🇸🇬" },
-  { code:"HKD", name:"Hong Kong Dollar",   flag:"🇭🇰" },
-  { code:"NOK", name:"Norwegian Krone",    flag:"🇳🇴" },
-  { code:"SEK", name:"Swedish Krona",      flag:"🇸🇪" },
-  { code:"DKK", name:"Danish Krone",       flag:"🇩🇰" },
-  { code:"NZD", name:"New Zealand Dollar", flag:"🇳🇿" },
-  { code:"ZAR", name:"South African Rand", flag:"🇿🇦" },
-  { code:"AED", name:"UAE Dirham",         flag:"🇦🇪" },
-  { code:"PLN", name:"Polish Złoty",       flag:"🇵🇱" },
-  { code:"CZK", name:"Czech Koruna",       flag:"🇨🇿" },
-  { code:"HUF", name:"Hungarian Forint",   flag:"🇭🇺" },
-  { code:"RON", name:"Romanian Leu",       flag:"🇷🇴" },
-  { code:"TRY", name:"Turkish Lira",       flag:"🇹🇷" },
-  { code:"THB", name:"Thai Baht",          flag:"🇹🇭" },
-  { code:"MYR", name:"Malaysian Ringgit",  flag:"🇲🇾" },
-  { code:"IDR", name:"Indonesian Rupiah",  flag:"🇮🇩" },
-  { code:"PHP", name:"Philippine Peso",    flag:"🇵🇭" },
-  { code:"VND", name:"Vietnamese Dong",    flag:"🇻🇳" },
-  { code:"SAR", name:"Saudi Riyal",        flag:"🇸🇦" },
-  { code:"QAR", name:"Qatari Riyal",       flag:"🇶🇦" },
-  { code:"KWD", name:"Kuwaiti Dinar",      flag:"🇰🇼" },
-  { code:"BHD", name:"Bahraini Dinar",     flag:"🇧🇭" },
-  { code:"ILS", name:"Israeli Shekel",     flag:"🇮🇱" },
-  { code:"EGP", name:"Egyptian Pound",     flag:"🇪🇬" },
-  { code:"NGN", name:"Nigerian Naira",     flag:"🇳🇬" },
-  { code:"GHS", name:"Ghanaian Cedi",      flag:"🇬🇭" },
-  { code:"KES", name:"Kenyan Shilling",    flag:"🇰🇪" },
-  { code:"CLP", name:"Chilean Peso",       flag:"🇨🇱" },
-  { code:"COP", name:"Colombian Peso",     flag:"🇨🇴" },
-  { code:"PEN", name:"Peruvian Sol",       flag:"🇵🇪" },
-  { code:"ARS", name:"Argentine Peso",     flag:"🇦🇷" },
-  { code:"UYU", name:"Uruguayan Peso",     flag:"🇺🇾" },
-  { code:"PKR", name:"Pakistani Rupee",    flag:"🇵🇰" },
-  { code:"BDT", name:"Bangladeshi Taka",   flag:"🇧🇩" },
-  { code:"LKR", name:"Sri Lankan Rupee",   flag:"🇱🇰" },
-  { code:"NPR", name:"Nepalese Rupee",     flag:"🇳🇵" },
-  { code:"UAH", name:"Ukrainian Hryvnia",  flag:"🇺🇦" },
-  { code:"RUB", name:"Russian Ruble",      flag:"🇷🇺" },
+document.head.append(h("style", {}, GLASS_CSS + TOOLTIP_CSS));
+const $ = (id) => document.getElementById(id);
+
+const SLIDERS = [
+  ["displacement", "Refraction", "How strongly the edges bend what's behind.", (v) => `${v}`],
+  ["blur", "Frost", "Backdrop blur.", (v) => `${v}px`],
+  ["saturation", "Vibrancy", "Colour saturation seen through the glass.", (v) => `${v}%`],
+  ["aberration", "Chromatic aberration", "Rainbow fringe on the bent edges.", (v) => `${v}`],
+  ["elasticity", "Elasticity", "Liquid stretch toward your cursor.", (v) => v.toFixed(2)],
+  ["radius", "Corner radius", "Roundness of every surface.", (v) => `${v}px`],
+  ["tint", "Tint", "How opaque the glass is.", (v) => `${Math.round(v * 100)}%`],
+  ["scale", "Tooltip size", "Scales the on-page tooltip.", (v) => `${v.toFixed(2)}×`]
 ];
+const SAMPLE_RATES = { EUR: 0.92, GBP: 0.79, INR: 84.1, JPY: 151.3, CAD: 1.37, AUD: 1.52 };
 
-// ── State ────────────────────────────────────────────────────────────────────
-let selectedCurrencies = new Set(["USD","EUR","GBP"]);
-let domainOverrides = {}; // { "amazon.co.uk": "GBP", ... }
-let prefs = { enabled: true, selectionMode: true, underline: true };
-let dirty = false;
+let appearance = DEFAULT_APPEARANCE;
+let targets = ["USD", "EUR", "GBP"];
+let overrides = {};
+let glasses = [];
+let liveRates = null;
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
-const grid = document.getElementById("currency-grid");
-const strip = document.getElementById("selected-strip");
-const filterInput = document.getElementById("currency-filter");
-const selCountEl = document.getElementById("sel-count");
-const selBadge = document.getElementById("sel-count-badge");
-const saveBar = document.getElementById("save-bar");
-const saveBtn = document.getElementById("save-btn");
-const saveFeedback = document.getElementById("save-feedback");
-
-// ── Navigation ───────────────────────────────────────────────────────────────
-document.querySelectorAll(".nav-item").forEach(item => {
-  item.addEventListener("click", e => {
-    e.preventDefault();
-    const page = item.dataset.page;
-    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
-    document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
-    item.classList.add("active");
-    document.getElementById(`page-${page}`)?.classList.add("active");
-  });
-});
-
-// ── Load settings ─────────────────────────────────────────────────────────────
-async function load() {
-  const data = await chrome.storage.sync.get([
-    "targetCurrencies","targetCurrency","domainOverrides",
-    "enabled","selectionMode","underline"
-  ]);
-
-  if (data.targetCurrencies?.length) {
-    selectedCurrencies = new Set(data.targetCurrencies);
-  } else if (data.targetCurrency) {
-    selectedCurrencies = new Set([data.targetCurrency]);
-  }
-
-  domainOverrides = data.domainOverrides || {};
-  prefs.enabled = data.enabled !== false;
-  prefs.selectionMode = data.selectionMode !== false;
-  prefs.underline = data.underline !== false;
-
-  document.getElementById("pref-enabled").checked = prefs.enabled;
-  document.getElementById("pref-selection").checked = prefs.selectionMode;
-  document.getElementById("pref-underline").checked = prefs.underline;
-
-  renderGrid();
-  renderStrip();
-  renderOverrides();
-  populateCurrencySelect();
+// ─── Save + toast ─────────────────────────────────────────────────────────
+let toastTimer = 0;
+function toast(text = "Saved") {
+  const t = $("toast");
+  t.firstElementChild.lastChild.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1400);
+}
+async function save(items) {
+  await chrome.storage.sync.set(items);
+  toast();
+}
+let appearanceTimer = 0;
+function setAppearance(next, persist = true) {
+  appearance = normalizeAppearance(next);
+  applyAppearance(document.documentElement, appearance);
+  glasses.forEach((g) => g.update(appearance));
+  syncAppearanceControls();
+  if (!persist) return;
+  clearTimeout(appearanceTimer);
+  appearanceTimer = setTimeout(() => save({ appearance }), 250);
 }
 
-// ── Currency grid ─────────────────────────────────────────────────────────────
-function renderGrid(filter = "") {
-  const q = filter.toLowerCase();
-  const visible = ALL_CURRENCIES.filter(c =>
-    !q || c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
-  );
-
-  grid.innerHTML = visible.map(c => `
-    <div class="currency-chip ${selectedCurrencies.has(c.code) ? "selected" : ""}"
-         data-code="${c.code}">
-      <span class="cc-flag">${c.flag}</span>
-      <div class="cc-info">
-        <div class="cc-code">${c.code}</div>
-        <div class="cc-name">${c.name}</div>
-      </div>
-      <div class="cc-check">✓</div>
-    </div>
-  `).join("");
-
-  grid.querySelectorAll(".currency-chip").forEach(chip => {
-    chip.addEventListener("click", () => toggleCurrency(chip.dataset.code));
+// ─── Navigation ───────────────────────────────────────────────────────────
+const navButtons = [...document.querySelectorAll("nav button[data-page]")];
+function go(page) {
+  navButtons.forEach((b) => b.removeAttribute("aria-current"));
+  navButtons.find((b) => b.dataset.page === page)?.setAttribute("aria-current", "page");
+  document.querySelectorAll("main > section").forEach((s) => {
+    const show = s.id === `page-${page}`;
+    s.hidden = !show;
+    if (show) { s.classList.remove("enter"); void s.offsetWidth; s.classList.add("enter"); }
   });
-
-  updateCount();
+  history.replaceState(null, "", `#${page}`);
 }
+navButtons.forEach((b) => b.addEventListener("click", () => go(b.dataset.page)));
 
-function toggleCurrency(code) {
-  if (selectedCurrencies.has(code)) {
-    if (selectedCurrencies.size <= 1) return; // Keep at least one
-    selectedCurrencies.delete(code);
+// ─── Currencies ───────────────────────────────────────────────────────────
+function renderCurrencies() {
+  const q = $("filter").value.trim().toLowerCase();
+  $("picked").replaceChildren(...targets.map((code) =>
+    h("button", { class: "pill", title: `Remove ${code}`, "aria-label": `Remove ${code}`, onclick: () => toggleTarget(code) },
+      `${CURRENCY_BY_CODE[code].flag} ${code}`, h("span", { "aria-hidden": "true" }, "✕"))
+  ));
+  $("pick-count").textContent = `${targets.length} of ${MAX_TARGET_CURRENCIES} selected · ${targets[0]} is home`;
+  $("grid").replaceChildren(...CURRENCIES
+    .filter((c) => !q || c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
+    .map((c) => h("button", { class: "cur", "aria-pressed": String(targets.includes(c.code)), onclick: () => toggleTarget(c.code) },
+      h("span", { class: "f" }, c.flag),
+      h("span", { class: "t" }, h("b", {}, c.code), h("small", {}, c.name))
+    )));
+}
+function toggleTarget(code) {
+  if (targets.includes(code)) {
+    if (targets.length === 1) return toast("Keep at least one currency");
+    targets = targets.filter((c) => c !== code);
   } else {
-    selectedCurrencies.add(code);
+    if (targets.length >= MAX_TARGET_CURRENCIES) return toast(`Up to ${MAX_TARGET_CURRENCIES} currencies`);
+    targets = [...targets, code];
   }
-  markDirty();
-  renderGrid(filterInput.value);
-  renderStrip();
+  renderCurrencies();
+  renderPreview();
+  save({ targetCurrencies: targets, targetCurrency: targets[0] });
+}
+$("filter").addEventListener("input", renderCurrencies);
+
+// ─── Appearance ───────────────────────────────────────────────────────────
+function segmented(container, options, label, onPick) {
+  container.setAttribute("role", "group");
+  container.setAttribute("aria-label", label);
+  container.replaceChildren(...options.map((value) =>
+    h("button", { "data-value": value, "aria-pressed": "false", onclick: () => onPick(value) }, value[0].toUpperCase() + value.slice(1))
+  ));
+}
+function markPressed(container, value) {
+  for (const b of container.children) b.setAttribute("aria-pressed", String(b.dataset.value === value));
 }
 
-function renderStrip() {
-  if (selectedCurrencies.size === 0) {
-    strip.innerHTML = `<span class="strip-empty">No currencies selected yet</span>`;
-    return;
+segmented($("presets"), Object.keys(PRESETS), "Presets", (name) => {
+  setAppearance({ ...DEFAULT_APPEARANCE, theme: appearance.theme, accent: appearance.accent, ...PRESETS[name] });
+  markPressed($("presets"), name);
+});
+segmented($("theme"), THEMES, "Theme", (theme) => setAppearance({ ...appearance, theme }));
+segmented($("material"), MATERIALS, "Material", (material) => setAppearance({ ...appearance, material }));
+$("accent").replaceChildren(...ACCENTS.map((c) =>
+  h("button", { "data-value": c, style: `--c:${c}`, "aria-label": `Accent ${c}`, "aria-pressed": "false", onclick: () => setAppearance({ ...appearance, accent: c }) })
+));
+$("sliders").replaceChildren(...SLIDERS.map(([key, title, help, fmt]) => {
+  const [min, max, step] = RANGES[key];
+  const id = `s-${key}`;
+  const input = h("input", { type: "range", id, min, max, step });
+  input.addEventListener("input", () => {
+    $("presets").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", "false"));
+    setAppearance({ ...appearance, [key]: Number(input.value) });
+  });
+  return h("div", { class: "slider" },
+    h("label", { for: id }, h("b", {}, title), h("small", {}, help)),
+    h("output", { id: `${id}-out`, for: id }),
+    input
+  );
+}));
+for (const key of ["specular", "motion"]) $(key).addEventListener("change", (e) => setAppearance({ ...appearance, [key]: e.target.checked }));
+$("reset").addEventListener("click", () => { setAppearance(DEFAULT_APPEARANCE); markPressed($("presets"), "Liquid"); });
+
+function syncAppearanceControls() {
+  markPressed($("theme"), appearance.theme);
+  markPressed($("material"), appearance.material);
+  markPressed($("accent"), appearance.accent);
+  for (const [key, , , fmt] of SLIDERS) {
+    const input = $(`s-${key}`);
+    if (Number(input.value) !== appearance[key]) input.value = String(appearance[key]);
+    $(`s-${key}-out`).textContent = fmt(appearance[key]);
   }
-  strip.innerHTML = [...selectedCurrencies].map(code => {
-    const c = ALL_CURRENCIES.find(x => x.code === code) || { flag: "🌐", name: code };
-    return `<div class="strip-chip" data-code="${code}">
-      <span>${c.flag}</span> ${code}
-      <span class="strip-x">×</span>
-    </div>`;
-  }).join("");
-
-  strip.querySelectorAll(".strip-chip").forEach(chip => {
-    chip.addEventListener("click", () => toggleCurrency(chip.dataset.code));
-  });
+  $("specular").checked = appearance.specular;
+  $("motion").checked = appearance.motion;
 }
 
-function updateCount() {
-  const n = selectedCurrencies.size;
-  selCountEl.textContent = `${n} currenc${n === 1 ? "y" : "ies"} selected`;
-  selBadge.textContent = n;
+async function loadPreviewRates() {
+  try {
+    const list = targets.filter((c) => c !== "USD").slice(0, MAX_TARGET_CURRENCIES);
+    if (!list.length) return;
+    const res = await chrome.runtime.sendMessage({ type: "GET_RATES_MULTI", base: "USD", targets: list });
+    if (res?.success) liveRates = res;
+  } catch {}
+  renderPreview();
+}
+function renderPreview() {
+  const shown = targets.filter((c) => c !== "USD").slice(0, 4);
+  const codes = shown.length ? shown : ["EUR", "GBP", "INR"];
+  const rates = Object.fromEntries(codes.map((code) => {
+    const live = liveRates?.rates?.[code];
+    return [code, live?.success ? live : { success: true, rate: SAMPLE_RATES[code] ?? 1.5, timestamp: Date.now() }];
+  }));
+  $("preview-body").replaceChildren(...buildResult({
+    amount: 249.99, originalCurrency: "USD", rates, source: liveRates?.source,
+    instant: !appearance.motion || prefersReducedMotion()
+  }));
 }
 
-filterInput.addEventListener("input", () => renderGrid(filterInput.value));
+// ─── Behavior ─────────────────────────────────────────────────────────────
+const BEHAVIOR = { "pref-enabled": "enabled", "pref-selection": "selectionMode", "pref-underline": "underline" };
+for (const [id, key] of Object.entries(BEHAVIOR)) $(id).addEventListener("change", (e) => save({ [key]: e.target.checked }));
 
-document.getElementById("clear-all-btn").addEventListener("click", () => {
-  // Keep only the first selected
-  const first = [...selectedCurrencies][0];
-  selectedCurrencies = new Set([first]);
-  markDirty();
-  renderGrid(filterInput.value);
-  renderStrip();
-});
-
-// ── Domain overrides ─────────────────────────────────────────────────────────
-function populateCurrencySelect() {
-  const sel = document.getElementById("new-currency-select");
-  sel.innerHTML = ALL_CURRENCIES.map(c =>
-    `<option value="${c.code}">${c.flag} ${c.code} — ${c.name}</option>`
-  ).join("");
-}
-
-function renderOverrides() {
-  const tbody = document.getElementById("override-tbody");
-  const entries = Object.entries(domainOverrides);
-  if (entries.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" style="color:var(--text-dim);font-size:12px;padding:12px 10px">No overrides configured.</td></tr>`;
-    return;
+// ─── Sites ────────────────────────────────────────────────────────────────
+const DOMAIN = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+function normalizeDomain(input) {
+  const raw = input.trim().toLowerCase();
+  try {
+    return new URL(raw.includes("://") ? raw : `https://${raw}`).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
   }
-  tbody.innerHTML = entries.map(([domain, currency]) => {
-    const c = ALL_CURRENCIES.find(x => x.code === currency);
-    return `<tr>
-      <td class="dt-domain">${domain}</td>
-      <td><span class="dt-flag">${c?.flag || "🌐"}</span> <span class="dt-currency">${currency}</span></td>
-      <td><button class="dt-remove" data-domain="${domain}">✕</button></td>
-    </tr>`;
-  }).join("");
-
-  tbody.querySelectorAll(".dt-remove").forEach(btn => {
-    btn.addEventListener("click", () => {
-      delete domainOverrides[btn.dataset.domain];
-      markDirty();
-      renderOverrides();
-    });
-  });
 }
-
-document.getElementById("add-override-btn").addEventListener("click", () => {
-  const domain = document.getElementById("new-domain").value.trim().toLowerCase()
-    .replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  const currency = document.getElementById("new-currency-select").value;
-  if (!domain) return;
-  domainOverrides[domain] = currency;
-  document.getElementById("new-domain").value = "";
-  markDirty();
-  renderOverrides();
-});
-
-// ── Behavior toggles ─────────────────────────────────────────────────────────
-["pref-enabled","pref-selection","pref-underline"].forEach(id => {
-  document.getElementById(id).addEventListener("change", markDirty);
-});
-
-// ── Dirty / Save ─────────────────────────────────────────────────────────────
-function markDirty() {
-  dirty = true;
-  saveBar.classList.add("visible");
-  saveFeedback.classList.remove("show");
+function renderSites() {
+  const entries = Object.entries(overrides);
+  $("sites").replaceChildren(...(entries.length ? entries.map(([domain, code]) =>
+    h("div", { class: "site" },
+      h("b", {}, domain),
+      h("span", {}, `${CURRENCY_BY_CODE[code]?.flag ?? ""} ${code}`),
+      h("button", { class: "btn", "aria-label": `Remove ${domain}`, onclick: () => { delete overrides[domain]; renderSites(); save({ domainOverrides: overrides }); } }, "Remove")
+    )) : [h("div", { class: "hint", style: "padding:10px 0" }, "No site rules yet.")]));
 }
-
-saveBtn.addEventListener("click", async () => {
-  const currencies = [...selectedCurrencies];
-
-  const settings = {
-    targetCurrencies: currencies,
-    targetCurrency: currencies[0], // legacy compat
-    domainOverrides,
-    enabled: document.getElementById("pref-enabled").checked,
-    selectionMode: document.getElementById("pref-selection").checked,
-    underline: document.getElementById("pref-underline").checked,
-  };
-
-  await chrome.storage.sync.set(settings);
-
-  // Notify all content scripts about the change
-  const tabs = await chrome.tabs.query({});
-  tabs.forEach(tab => {
-    chrome.tabs.sendMessage(tab.id, {
-      type: "SET_TARGET_CURRENCIES",
-      value: currencies,
-    }).catch(() => {}); // Ignore tabs without content script
-  });
-  chrome.tabs.query({}).then(tabs => {
-    tabs.forEach(tab => {
-      chrome.tabs.sendMessage(tab.id, {
-        type: "SET_ENABLED",
-        value: settings.enabled,
-      }).catch(() => {});
-    });
-  });
-
-  dirty = false;
-  saveFeedback.classList.add("show");
-  saveBtn.style.display = "none";
-  setTimeout(() => {
-    saveBar.classList.remove("visible");
-    saveBtn.style.display = "";
-    saveFeedback.classList.remove("show");
-  }, 2500);
+$("site-currency").replaceChildren(...CURRENCIES.map((c) => h("option", { value: c.code }, `${c.flag}  ${c.code} — ${c.name}`)));
+$("add-site").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const domain = normalizeDomain($("site-domain").value);
+  const code = $("site-currency").value;
+  const err = $("site-error");
+  err.hidden = true;
+  if (!DOMAIN.test(domain)) return Object.assign(err, { hidden: false, textContent: "Enter a domain like amazon.ca" });
+  if (!(domain in overrides) && Object.keys(overrides).length >= MAX_DOMAIN_OVERRIDES) {
+    return Object.assign(err, { hidden: false, textContent: `Up to ${MAX_DOMAIN_OVERRIDES} site rules` });
+  }
+  overrides = { ...overrides, [domain]: code };
+  $("site-domain").value = "";
+  renderSites();
+  save({ domainOverrides: overrides });
 });
 
-// ── Bootstrap ────────────────────────────────────────────────────────────────
-load();
+// ─── Boot ─────────────────────────────────────────────────────────────────
+(async () => {
+  const data = await chrome.storage.sync.get([
+    "targetCurrencies", "targetCurrency", "domainOverrides", "enabled", "selectionMode", "underline", "appearance"
+  ]);
+  const saved = Array.isArray(data.targetCurrencies) ? data.targetCurrencies.filter(isCurrencyCode).slice(0, MAX_TARGET_CURRENCIES) : [];
+  if (saved.length) targets = [...new Set(saved)];
+  else if (isCurrencyCode(data.targetCurrency)) targets = [data.targetCurrency];
+  if (data.domainOverrides && typeof data.domainOverrides === "object") {
+    overrides = Object.fromEntries(Object.entries(data.domainOverrides).filter(([d, c]) => DOMAIN.test(d) && isCurrencyCode(c)));
+  }
+  $("pref-enabled").checked = data.enabled !== false;
+  $("pref-selection").checked = data.selectionMode !== false;
+  $("pref-underline").checked = data.underline !== false;
+  $("version").textContent = chrome.runtime.getManifest().version;
+
+  setAppearance(data.appearance, false);
+  glasses = [...document.querySelectorAll(".glass")].map((el) => mountGlass(el, appearance));
+  glasses.push(mountGlass($("preview"), appearance));
+  renderCurrencies();
+  renderSites();
+  renderPreview();
+  loadPreviewRates();
+  const page = location.hash.slice(1);
+  if (navButtons.some((b) => b.dataset.page === page)) go(page);
+})();

@@ -14,7 +14,7 @@ const snapshot: RateSnapshot = {
   rates: { EUR: 0.85, JPY: 150 },
   fetchedAt: 1_700_000_000_000,
   expiresAt: 1_700_001_800_000,
-  source: "frankfurter"
+  source: "open-er-api"
 };
 
 const settings: Settings = {

@@ -1,79 +1,39 @@
 /**
- * background.js — Forex Hover Pro v2 Service Worker
+ * background.js — Forex Hover Pro service worker.
  *
- * Handles:
- *  - Single pair rate fetching (GET_RATE)
- *  - Multi-target batch rate fetching (GET_RATES_MULTI) for the new multi-currency tooltip
- *  - 30-minute TTL cache in chrome.storage.local
+ * Keyless rates: one validated snapshot per base currency, cached in
+ * chrome.storage.local, deduplicated in flight, stale-but-labelled offline.
  */
+import { createRateCache } from "./src/shared/rates.ts";
+import { isRuntimeMessage } from "./src/shared/validate.ts";
 
-// Temporary compatibility path. This key must stay local and is intentionally
-// absent from source control while the worker moves to the keyless provider.
-const API_KEY = "";
+const getSnapshot = createRateCache(chrome.storage.local);
 
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-
-/**
- * Fetches a single exchange rate, using cache when available.
- */
-async function getRate(base, target) {
-  if (base === target) return { rate: 1, timestamp: Date.now() };
-
-  const cacheKey = `rate_${base}_${target}`;
-  const now = Date.now();
-
-  const cached = await chrome.storage.local.get(cacheKey);
-  if (cached[cacheKey] && now - cached[cacheKey].timestamp < CACHE_TTL_MS) {
-    return cached[cacheKey];
+async function getRates(base, targets) {
+  const { snapshot, stale } = await getSnapshot(base);
+  const rates = {};
+  for (const target of targets) {
+    const rate = snapshot.rates[target];
+    rates[target] = rate
+      ? { success: true, rate, timestamp: snapshot.fetchedAt, stale }
+      : { success: false, error: "UNSUPPORTED_CURRENCY" };
   }
-
-  if (!API_KEY) {
-    throw new Error("API key not configured. Please add your ExchangeRate-API key to background.js.");
-  }
-
-  const url = `https://v6.exchangerate-api.com/v6/${API_KEY}/pair/${base}/${target}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
-
-  const data = await response.json();
-  if (data.result !== "success") throw new Error(`API error: ${data["error-type"] || "Unknown"}`);
-
-  const entry = { rate: data.conversion_rate, timestamp: now };
-  await chrome.storage.local.set({ [cacheKey]: entry });
-  return entry;
+  return { rates, source: snapshot.source, stale, timestamp: snapshot.fetchedAt };
 }
 
-/**
- * Fetches multiple target rates from a single base currency in parallel.
- * Returns a map: { EUR: { rate, timestamp }, GBP: { rate, timestamp }, ... }
- */
-async function getRatesMulti(base, targets) {
-  const results = {};
-  await Promise.all(
-    targets.map(async (target) => {
-      try {
-        const entry = await getRate(base, target);
-        results[target] = { success: true, ...entry };
-      } catch (err) {
-        results[target] = { success: false, error: err.message };
-      }
-    })
-  );
-  return results;
-}
-
-// --- Message Listener ---
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (!isRuntimeMessage(message)) return;
+
   if (message.type === "GET_RATE") {
-    getRate(message.base, message.target)
-      .then((r) => sendResponse({ success: true, ...r }))
+    getRates(message.base, [message.target])
+      .then(({ rates, source }) => sendResponse({ ...rates[message.target], source }))
       .catch((e) => sendResponse({ success: false, error: e.message }));
     return true;
   }
 
   if (message.type === "GET_RATES_MULTI") {
-    getRatesMulti(message.base, message.targets)
-      .then((r) => sendResponse({ success: true, rates: r }))
+    getRates(message.base, message.targets)
+      .then((r) => sendResponse({ success: true, ...r }))
       .catch((e) => sendResponse({ success: false, error: e.message }));
     return true;
   }
