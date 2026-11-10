@@ -7,7 +7,7 @@
  * the site shows behind it. Drag it by the header; the position is remembered.
  */
 import { normalizeAppearance } from "./src/ui/appearance.ts";
-import { ART_CSS, panelArt } from "./src/ui/art.ts";
+import { ART_CSS, mountScene, panelArt } from "./src/ui/art.ts";
 import { CONTROLS_CSS } from "./src/ui/controls.ts";
 import { CONVERTER_CSS, createConverter } from "./src/ui/converter.ts";
 import { h } from "./src/ui/dom.ts";
@@ -40,6 +40,7 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
   let host = null;
   let shell = null;
   let converter = null;
+  let art = null;
   let appearance = normalizeAppearance(null);
   let pos = null;
   let anchored = true; // follows the top-right corner until the user drags it
@@ -73,7 +74,9 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
 
   function applyTheme() {
     const theme = appearance.theme === "auto" ? (pageIsLight() ? "light" : "dark") : appearance.theme;
-    applyAppearance(shell, appearance, theme);
+    // The converter has its own background switch, separate from the settings page.
+    applyAppearance(shell, { ...appearance, wallpaper: appearance.panelArt }, theme);
+    mountScene(art, appearance.scene, "panel");
     converter.setAppearance(appearance);
   }
 
@@ -132,7 +135,8 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
       onClose: () => close()
     });
     // Background art sits behind the glass cards; with it off, the glass refracts the page itself.
-    shell = h("div", { class: "shell", role: "dialog", "aria-label": "Forex Hover converter" }, panelArt(), converter.root);
+    art = panelArt();
+    shell = h("div", { class: "shell", role: "dialog", "aria-label": "Forex Hover converter" }, art, converter.root);
     shadow.append(shell);
     document.documentElement.append(host);
     const saved = panelPos && Number.isFinite(panelPos.x) && Number.isFinite(panelPos.y) ? panelPos : null;

@@ -42,7 +42,7 @@
   .code { font-weight: 600; width: 40px; }
   .muted { color: var(--fg-2); }
   .search-wrap { padding: 12px 16px 6px; }
-  .all { max-height: 420px; overflow-y: auto; }
+  .all { max-height: 420px; overflow-y: auto; overflow-x: hidden; padding-bottom: 6px; }
 
   /* Appearance */
   .stage {
@@ -91,14 +91,24 @@
   .toast-wrap.show { opacity: 1; transform: translate(-50%, 0); }
   .toast { padding: 9px 18px; font-weight: 500; }
 
-  /* Wallpaper tuning per theme */
-  .aurora { width: 100vw; height: 100vh; background: var(--canvas); }
-  .aurora-glow { opacity: 0.55; }
-  .aurora-ribbons { opacity: 0.9; }
-  .aurora-grain { opacity: 0.06; mix-blend-mode: overlay; }
-  [data-theme="light"] .aurora-glow { opacity: 0.35; }
-  [data-theme="light"] .aurora-ribbons { opacity: 0.75; }
-  [data-theme="light"] .aurora-grain { opacity: 0.05; }
+  .scene-row { flex-wrap: wrap; }
+  .scenes { display: flex; gap: 10px; }
+  .scene-tile {
+    border: 0; padding: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--fg-2); transition: transform 0.2s var(--ease);
+  }
+  .scene-tile:hover { transform: translateY(-2px); }
+  .scene-preview {
+    position: relative; display: block; width: 112px; height: 70px; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 0 0 1px var(--hairline), 0 4px 14px rgb(0 0 0 / 0.25); transition: box-shadow 0.2s var(--ease);
+  }
+  .scene-preview .cosmos { position: absolute; inset: 0; }
+  .scene-tile[aria-pressed="true"] .scene-preview { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent), 0 4px 14px rgb(0 0 0 / 0.3); }
+  .scene-tile[aria-pressed="true"] { color: var(--fg); font-weight: 600; }
+  .scene-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 14px; }
+  /* Previews never animate, and stay visible even when the page background is off. */
+  .scene-preview .cosmos, .scene-preview .cosmos * { animation: none !important; }
+  [data-wallpaper="off"] .scene-preview .cosmos { display: block; }
   .made-by { margin: 40px 0 8px; text-align: center; font-size: 13px; font-weight: 500; color: var(--fg-2); }
   @media (max-width: 900px) {
     .layout { grid-template-columns: 1fr; }
@@ -108,47 +118,7 @@
 </style>
 </head>
 <body>
-<!-- Accent-driven wallpaper: soft light fields + flowing silk ribbons + grain.
-     Every colour derives from --accent, so the whole page follows it. -->
-<svg class="wallpaper aurora" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <defs>
-    <linearGradient id="rib-a" x1="0" y1="0" x2="1" y2="0.2">
-      <stop offset="0" style="stop-color:var(--accent);stop-opacity:0"/>
-      <stop offset="0.3" style="stop-color:var(--accent);stop-opacity:0.95"/>
-      <stop offset="0.7" style="stop-color:color-mix(in srgb, var(--accent) 55%, #bf5af2)"/>
-      <stop offset="1" style="stop-color:color-mix(in srgb, var(--accent) 40%, #ff375f);stop-opacity:0.2"/>
-    </linearGradient>
-    <linearGradient id="rib-b" x1="1" y1="0" x2="0" y2="0.3">
-      <stop offset="0" style="stop-color:color-mix(in srgb, var(--accent) 50%, #64d2ff);stop-opacity:0.1"/>
-      <stop offset="0.45" style="stop-color:color-mix(in srgb, var(--accent) 65%, #64d2ff)"/>
-      <stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/>
-    </linearGradient>
-    <linearGradient id="rib-c" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" style="stop-color:color-mix(in srgb, var(--accent) 55%, #fff);stop-opacity:0"/>
-      <stop offset="0.5" style="stop-color:color-mix(in srgb, var(--accent) 55%, #fff);stop-opacity:0.8"/>
-      <stop offset="1" style="stop-color:color-mix(in srgb, var(--accent) 60%, #ff375f);stop-opacity:0"/>
-    </linearGradient>
-    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.45"/>
-      <stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="70"/></filter>
-    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0.5 0"/></filter>
-  </defs>
-  <g filter="url(#soft)" class="aurora-glow">
-    <ellipse cx="160" cy="80" rx="420" ry="260" style="fill:var(--accent)"/>
-    <ellipse cx="1320" cy="220" rx="380" ry="300" style="fill:color-mix(in srgb, var(--accent) 50%, #bf5af2)"/>
-    <ellipse cx="760" cy="900" rx="560" ry="260" style="fill:color-mix(in srgb, var(--accent) 50%, #64d2ff)"/>
-    <ellipse cx="60" cy="760" rx="320" ry="220" style="fill:color-mix(in srgb, var(--accent) 60%, #ff375f)"/>
-  </g>
-  <g class="aurora-ribbons">
-    <path d="M-80 560 C 220 420, 460 700, 760 560 S 1240 300, 1520 430 L1520 540 C 1250 420, 1010 660, 740 690 S 230 560, -80 700 Z" fill="url(#rib-a)"/>
-    <path d="M-80 560 C 220 420, 460 700, 760 560 S 1240 300, 1520 430 L1520 470 C 1240 350, 980 610, 750 600 S 240 470, -80 600 Z" fill="url(#sheen)"/>
-    <path d="M1520 140 C 1220 260, 1000 60, 700 190 S 220 330, -80 220 L-80 270 C 220 390, 470 260, 720 260 S 1240 300, 1520 230 Z" fill="url(#rib-b)"/>
-    <path d="M-80 880 C 300 760, 640 900, 980 780 S 1380 700, 1520 760 L1520 830 C 1340 790, 1080 900, 900 900 Z" fill="url(#rib-c)"/>
-  </g>
-  <rect width="1440" height="900" filter="url(#grain)" class="aurora-grain"/>
-</svg>
+<div class="wallpaper" id="cosmos-host" aria-hidden="true"></div>
 <div class="layout">
   <aside class="glass panel sidebar">
     <div class="brand txt"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
@@ -195,7 +165,9 @@
         <div class="row"><div class="text"><b>Material</b></div><div class="seg" id="presets"></div></div>
         <div class="row"><div class="text"><b>Theme</b><small>Automatic follows your system and the page under the tooltip.</small></div><div class="seg" id="theme"></div></div>
         <div class="row"><div class="text"><b>Accent colour</b></div><div class="swatches" id="accent"></div></div>
-        <div class="row"><div class="text"><b>Background art</b><small>Silk ribbons in your accent colour behind the glass, here and in the converter. Turn off to make the converter see-through, so its glass bends the page itself.</small></div><label class="switch"><input type="checkbox" id="wallpaper" role="switch" aria-label="Background art" /><span></span></label></div>
+        <div class="row scene-row"><div class="text"><b>Background scene</b><small>Used behind this page and inside the converter.</small></div><div class="scenes" id="scenes" role="group" aria-label="Background scene"></div></div>
+        <div class="row"><div class="text"><b>Settings background</b><small>Show the chosen scene behind this page.</small></div><label class="switch"><input type="checkbox" id="wallpaper" role="switch" aria-label="Settings background" /><span></span></label></div>
+        <div class="row"><div class="text"><b>Converter background</b><small>Art inside the floating converter. Turn off to make it see-through, so its glass bends the web page itself.</small></div><label class="switch"><input type="checkbox" id="panelArt" role="switch" aria-label="Converter background" /><span></span></label></div>
         <div class="row"><div class="text"><b>Clear liquid mode</b><small>Glass stays fully clear and refracts what's behind it; frost appears only behind text. Applies to the converter and this page.</small></div><label class="switch"><input type="checkbox" id="liquid" role="switch" aria-label="Clear liquid mode" /><span></span></label></div>
       </div>
       <div class="section-title">Glass</div>

@@ -3,24 +3,36 @@ export const CONTROLS_CSS = `
 /* :where() keeps these resets at zero specificity so component colours win. */
 :where([data-theme]) *, :where([data-theme]) *::before, :where([data-theme]) *::after { box-sizing: border-box; }
 :where([data-theme]) :where(button, input, select) { font: inherit; color: inherit; letter-spacing: inherit; }
+/* Thin, translucent scrollbars that sit on the glass instead of white native bars. */
+:where([data-theme]), :where([data-theme]) * {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg) 28%, transparent) transparent;
+}
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Glass panels hold text, so they keep enough body to stay readable. */
 .panel > .lg-warp { background: rgb(28 28 30 / max(var(--lg-tint-a), 0.42)); }
 [data-theme="light"] .panel > .lg-warp { background: rgb(255 255 255 / max(var(--lg-tint-a), 0.5)); }
 
-/* Clear liquid mode: panels are pure refracting glass; frost sits only behind text. */
-[data-liquid="on"] .panel { --lg-blur: 2px; }
+/* Clear liquid mode: panels are pure refracting glass. Text keeps contrast with a
+   light veil and a soft shadow instead of opaque plates, so the glass stays visible. */
+[data-liquid="on"] .panel { --lg-blur: 0px; --lg-sat: 120%; }
 [data-liquid="on"] .panel > .lg-warp { background: transparent; }
+[data-liquid="on"] .panel > .lg-spec { opacity: calc(var(--lg-spec, 0.75) + 0.2); }
 [data-liquid="on"] .txt, [data-liquid="on"] .panel .row {
-  background: rgb(28 28 30 / 0.36);
-  backdrop-filter: blur(14px) saturate(170%);
-  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  background: rgb(10 10 20 / 0.16);
+  backdrop-filter: blur(6px) saturate(140%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
   border-radius: 12px;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.55), 0 0 12px rgb(0 0 0 / 0.35);
 }
 [data-theme="light"][data-liquid="on"] .txt,
-[data-theme="light"][data-liquid="on"] .panel .row { background: rgb(255 255 255 / 0.5); }
+[data-theme="light"][data-liquid="on"] .panel .row {
+  background: rgb(255 255 255 / 0.22);
+  text-shadow: 0 1px 2px rgb(255 255 255 / 0.7), 0 0 12px rgb(255 255 255 / 0.5);
+}
 [data-liquid="on"] .panel .row { margin: 4px 8px; }
+[data-liquid="on"] .panel button.row { width: calc(100% - 16px); }
 [data-liquid="on"] .panel .row + .row::before { display: none; }
 
 /* Switch (iOS) */

@@ -1,6 +1,8 @@
 /** User-tunable Liquid Glass appearance, stored in chrome.storage.sync as `appearance`. */
 
 export const THEMES = ["auto", "light", "dark"] as const;
+/** Background scenes for the settings page and the converter. */
+export const SCENES = ["waves", "hyperspace", "mountains"] as const;
 // Apple system colours: blue, green, indigo, purple, orange, pink, graphite.
 export const ACCENTS = ["#0a84ff", "#30d158", "#5e5ce6", "#bf5af2", "#ff9f0a", "#ff375f", "#8e8e93"] as const;
 
@@ -18,10 +20,13 @@ export interface Appearance {
   scale: number;
   accent: (typeof ACCENTS)[number];
   motion: boolean;
-  /** Wallpaper behind the settings page and the fallback converter window. */
+  /** Silk-ribbon wallpaper behind the settings page. */
   wallpaper: boolean;
+  /** Background art inside the converter (floating panel and fallback window). */
+  panelArt: boolean;
   /** Clear liquid mode: panels stay fully clear; frost only behind text. */
   liquid: boolean;
+  scene: (typeof SCENES)[number];
 }
 
 /** Slider ranges: [min, max, step]. Also the clamp bounds for stored values. */
@@ -53,7 +58,9 @@ export const DEFAULT_APPEARANCE: Appearance = {
   accent: "#0a84ff",
   motion: true,
   wallpaper: true,
-  liquid: false
+  panelArt: true,
+  liquid: false,
+  scene: "hyperspace"
 };
 
 export const PRESETS: Record<string, Partial<Appearance>> = {
@@ -74,7 +81,8 @@ export function normalizeAppearance(raw: unknown): Appearance {
     list.includes(value as T) ? (value as T) : fallback;
   out.theme = pick(THEMES, input.theme, out.theme);
   out.accent = pick(ACCENTS, input.accent, out.accent);
-  for (const key of ["motion", "wallpaper", "liquid"] as const) {
+  out.scene = pick(SCENES, input.scene, out.scene);
+  for (const key of ["motion", "wallpaper", "panelArt", "liquid"] as const) {
     if (typeof input[key] === "boolean") out[key] = input[key];
   }
   return out;

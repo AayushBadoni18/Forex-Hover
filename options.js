@@ -6,14 +6,15 @@ import "./src/ui/backdrop.css";
 import { MAX_DOMAIN_OVERRIDES, MAX_TARGET_CURRENCIES } from "./src/shared/contracts.ts";
 import { CURRENCIES, CURRENCY_BY_CODE, isCurrencyCode } from "./src/shared/currencies.ts";
 import { normalizeDomain } from "./src/shared/currency-resolver.ts";
-import { ACCENTS, DEFAULT_APPEARANCE, normalizeAppearance, PRESETS, RANGES, THEMES } from "./src/ui/appearance.ts";
+import { ACCENTS, DEFAULT_APPEARANCE, normalizeAppearance, PRESETS, RANGES, SCENES, THEMES } from "./src/ui/appearance.ts";
 import { h } from "./src/ui/dom.ts";
 import { flag } from "./src/ui/flag.ts";
+import { ART_CSS, mountScene, sceneArt } from "./src/ui/art.ts";
 import { CONTROLS_CSS } from "./src/ui/controls.ts";
 import { applyAppearance, GLASS_CSS, mountGlass } from "./src/ui/glass.ts";
 import { addPlate, buildResult, TOOLTIP_CSS } from "./src/ui/tooltip-view.ts";
 
-document.head.append(h("style", {}, GLASS_CSS + CONTROLS_CSS + TOOLTIP_CSS));
+document.head.append(h("style", {}, GLASS_CSS + CONTROLS_CSS + TOOLTIP_CSS + ART_CSS));
 const $ = (id) => document.getElementById(id);
 
 const SLIDERS = [
@@ -52,6 +53,7 @@ let appearanceTimer = 0;
 function setAppearance(next, persist = true) {
   appearance = normalizeAppearance(next);
   applyAppearance(document.documentElement, appearance);
+  mountScene($("cosmos-host"), appearance.scene, "page");
   glasses.forEach((g) => g.update(appearance));
   syncAppearanceControls();
   if (!persist) return;
@@ -123,15 +125,22 @@ const markPressed = (container, value) => {
   for (const b of container.children) b.setAttribute("aria-pressed", String(b.dataset.value === value));
 };
 const matchingPreset = () => Object.keys(PRESETS).find((name) =>
-  Object.entries({ ...DEFAULT_APPEARANCE, ...PRESETS[name] }).every(([k, v]) => ["theme", "accent", "motion", "radius", "scale", "elasticity", "wallpaper", "liquid"].includes(k) || appearance[k] === v)
+  Object.entries({ ...DEFAULT_APPEARANCE, ...PRESETS[name] }).every(([k, v]) => ["theme", "accent", "motion", "radius", "scale", "elasticity", "wallpaper", "panelArt", "liquid", "scene"].includes(k) || appearance[k] === v)
 );
 
 segmented($("presets"), Object.keys(PRESETS), "Material", (name) => {
-  const { theme, accent, motion, radius, scale, elasticity, wallpaper, liquid } = appearance;
-  const keep = { theme, accent, motion, radius, scale, elasticity, wallpaper, liquid };
+  const { theme, accent, motion, radius, scale, elasticity, wallpaper, panelArt, liquid, scene } = appearance;
+  const keep = { theme, accent, motion, radius, scale, elasticity, wallpaper, panelArt, liquid, scene };
   setAppearance({ ...DEFAULT_APPEARANCE, ...PRESETS[name], ...keep });
 });
 segmented($("theme"), THEMES, "Theme", (theme) => setAppearance({ ...appearance, theme }), (v) => ({ auto: "Automatic", light: "Light", dark: "Dark" })[v]);
+// Background scene picker: live preview tiles of each scene.
+const SCENE_NAMES = { waves: "Waves", hyperspace: "Hyperspace", mountains: "Mountains" };
+$("scenes").replaceChildren(...SCENES.map((scene) =>
+  h("button", { class: "scene-tile", "data-value": scene, "aria-pressed": "false", onclick: () => setAppearance({ ...appearance, scene }) },
+    h("span", { class: "scene-preview" }, sceneArt(scene, "page")),
+    h("span", { class: "scene-name" }, SCENE_NAMES[scene]))
+));
 $("accent").replaceChildren(...ACCENTS.map((c) =>
   h("button", { "data-value": c, style: `--c:${c}`, "aria-label": `Accent ${c}`, "aria-pressed": "false", onclick: () => setAppearance({ ...appearance, accent: c }) })
 ));
@@ -145,7 +154,7 @@ $("sliders").replaceChildren(...SLIDERS.map(([key, title, help]) => {
     h("div", { class: "slider-ctl" }, input, h("output", { id: `${id}-out`, for: id }))
   );
 }));
-for (const key of ["motion", "wallpaper", "liquid"]) {
+for (const key of ["motion", "wallpaper", "panelArt", "liquid"]) {
   $(key).addEventListener("change", (e) => setAppearance({ ...appearance, [key]: e.target.checked }));
 }
 $("reset").addEventListener("click", () => setAppearance(DEFAULT_APPEARANCE));
@@ -154,12 +163,13 @@ function syncAppearanceControls() {
   markPressed($("presets"), matchingPreset());
   markPressed($("theme"), appearance.theme);
   markPressed($("accent"), appearance.accent);
+  markPressed($("scenes"), appearance.scene);
   for (const [key, , , fmt] of SLIDERS) {
     const input = $(`s-${key}`);
     if (Number(input.value) !== appearance[key]) input.value = String(appearance[key]);
     $(`s-${key}-out`).textContent = fmt(appearance[key]);
   }
-  for (const key of ["motion", "wallpaper", "liquid"]) $(key).checked = appearance[key];
+  for (const key of ["motion", "wallpaper", "panelArt", "liquid"]) $(key).checked = appearance[key];
 }
 
 async function loadPreviewRates() {
@@ -262,7 +272,7 @@ $("add-site").addEventListener("submit", (e) => {
   $("version").textContent = chrome.runtime.getManifest().version;
 
   setAppearance(data.appearance, false);
-  glasses = [...document.querySelectorAll(".glass")].map((el) => mountGlass(el, appearance, { bezel: 26 }));
+  glasses = [...document.querySelectorAll(".glass")].map((el) => mountGlass(el, appearance, { bezel: (a) => (a.liquid ? 40 : 26) }));
   glasses.push(mountGlass($("preview"), appearance, { bezel: 24 }));
   addPlate($("preview"));
   renderCurrencies();
@@ -271,4 +281,10 @@ $("add-site").addEventListener("submit", (e) => {
   loadPreviewRates();
   const page = location.hash.slice(1);
   if (navButtons.some((b) => b.dataset.page === page)) go(page);
+  // Stay in sync with changes made elsewhere (another settings tab, the converter).
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "sync" || !changes.appearance) return;
+    const next = normalizeAppearance(changes.appearance.newValue);
+    if (JSON.stringify(next) !== JSON.stringify(appearance)) setAppearance(next, false);
+  });
 })();

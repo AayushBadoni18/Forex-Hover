@@ -111,6 +111,7 @@ export function applyAppearance(root: HTMLElement, a: Appearance, theme = resolv
   root.dataset.motion = a.motion ? "on" : "off";
   root.dataset.liquid = a.liquid ? "on" : "off";
   root.dataset.wallpaper = a.wallpaper ? "on" : "off";
+  root.dataset.scene = a.scene;
   const set = (k: string, v: string) => root.style.setProperty(k, v);
   set("--lg-blur", `${a.blur}px`);
   set("--lg-sat", `${a.saturation}%`);
@@ -247,10 +248,14 @@ export interface GlassController {
 }
 
 /**
- * @param options.bezel fixed lens width in px (overrides the depth setting),
- *   e.g. a narrow strong rim for small floating cards.
+ * @param options.bezel lens width in px (overrides the depth setting), or a
+ *   function of the current appearance, e.g. a deeper lens in clear mode.
  */
-export function mountGlass(el: HTMLElement, initial: Appearance, { interactive = false, bezel = 0 } = {}): GlassController {
+export function mountGlass(
+  el: HTMLElement,
+  initial: Appearance,
+  { interactive = false, bezel = 0 as number | ((a: Appearance) => number) } = {}
+): GlassController {
   let a = initial;
   const id = `fhp-lg-${Math.random().toString(36).slice(2, 8)}-${uid++}`;
   el.classList.add("lg");
@@ -296,7 +301,8 @@ export function mountGlass(el: HTMLElement, initial: Appearance, { interactive =
     // Layout size, not getBoundingClientRect: transforms would skew the map.
     const width = el.offsetWidth;
     const height = el.offsetHeight;
-    const depth = bezel ? bezel / Math.max(1, Math.min(width, height)) : a.depth;
+    const lens = typeof bezel === "function" ? bezel(a) : bezel;
+    const depth = lens ? lens / Math.max(1, Math.min(width, height)) : a.depth;
     const key = `${width}x${height}:${a.radius}:${depth}`;
     if (key === built) return;
     built = key;

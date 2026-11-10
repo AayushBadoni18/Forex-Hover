@@ -67,7 +67,7 @@ export const CONVERTER_CSS = `
 .cv .sheet-card { width: 100%; max-height: 80%; display: flex; flex-direction: column; padding: 12px 10px 6px; animation: fhp-rise 0.2s var(--ease); }
 @keyframes fhp-rise { from { transform: translateY(14px); opacity: 0; } }
 .cv .sheet-head { display: flex; gap: 10px; align-items: center; padding: 0 4px 8px; }
-.cv .picker-list { overflow-y: auto; padding-bottom: 4px; }
+.cv .picker-list { overflow-y: auto; overflow-x: hidden; padding-bottom: 4px; }
 .cv .pick { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 9px 8px; border-radius: 10px; cursor: pointer; text-align: left; }
 .cv .pick:hover, .cv .pick:focus-visible { background: var(--fill); outline: 0; }
 .cv .pick b { font-weight: 600; width: 40px; }
@@ -349,7 +349,7 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
   let current = appearance;
   const mountAll = () => {
     // A narrow lens rim keeps refraction at the borders, where it reads as glass.
-    glasses = [...root.querySelectorAll<HTMLElement>(".glass")].map((node) => mountGlass(node, current, { bezel: 26 }));
+    glasses = [...root.querySelectorAll<HTMLElement>(".glass")].map((node) => mountGlass(node, current, { bezel: (a) => (a.liquid ? 40 : 26) }));
   };
 
   // ─── Boot ────────────────────────────────────────────────────────────────
