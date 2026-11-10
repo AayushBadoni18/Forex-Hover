@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ESNext", "DOM"],
+    "types": ["chrome", "node"],
+    "strict": true,
+    "noEmit": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true
+  },
+  "include": ["*.js", "scripts/**/*.mjs", "src/**/*.ts", "tests/**/*.ts"]
+}
