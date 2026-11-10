@@ -15,7 +15,7 @@ test("manifest references local extension entry points", async () => {
   const files = [
     manifest.background.service_worker,
     manifest.action?.default_popup,
-    manifest.options_page,
+    manifest.options_ui?.page,
     ...(manifest.content_scripts?.flatMap(({ js = [] }) => js) ?? [])
   ].filter((file): file is string => Boolean(file));
 

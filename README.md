@@ -79,28 +79,20 @@ The browser remains the application platform. No backend, database, authenticati
 | `options.html` / `options.js` | Settings UI and persistence |
 | `icons/` | Extension icons |
 
-## Run the current extension locally
+## Run the extension locally
 
-1. Open `chrome://extensions`.
-2. Enable **Developer mode**.
-3. Choose **Load unpacked**.
-4. Select this repository folder.
-5. Open a normal HTTP(S) page and click the extension action.
+1. `npm ci --ignore-scripts && npm run build`
+2. Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the `dist/` folder.
+3. Open any HTTP(S) page and hover a price.
 
-Security warning: `background.js` currently contains an exposed provider credential. Treat it as compromised and revoke it before using or distributing this repository. The approved implementation plan removes the need to package a shared key.
-
-There is currently no package manager, build command, automated test command, or CI pipeline. JavaScript syntax can be checked with:
-
-```powershell
-Get-ChildItem -Filter *.js | ForEach-Object { node --check $_.FullName }
-```
+No API key is needed: rates come from the keyless ExchangeRate-API open endpoint, with fawazahmed0/currency-api as a fallback. One snapshot per base currency is cached for 6 hours and served as labelled stale data when offline.
 
 ## Usage
 
 - Hover a detected price to request conversions in selected target currencies.
 - Select text containing a price to show a tooltip near the pointer.
 - Open the popup for a manual conversion.
-- Open **Full Settings** to choose targets and edit other preferences.
+- Open **Settings** to choose currencies, tune the Liquid Glass appearance, and set behaviour and per-site rules. Settings save automatically and apply live in open tabs.
 
 The audit identifies formats and preferences that are currently unreliable. Do not treat the current output as a financial or trading quote.
 
