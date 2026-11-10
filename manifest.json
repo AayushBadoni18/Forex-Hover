@@ -20,7 +20,6 @@
         "<all_urls>"
       ],
       "js": [
-        "priceDetector.js",
         "tooltip.js",
         "content.js"
       ],
@@ -43,5 +42,16 @@
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "flags/*.svg",
+        "fonts/*.woff2"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }

@@ -10,17 +10,15 @@ test("garbage storage falls back to defaults", () => {
 test("values are clamped and enums are checked", () => {
   const a = normalizeAppearance({
     blur: 999,
-    displacement: -5,
+    refraction: -5,
     tint: Number.NaN,
-    material: "lava",
     accent: "red",
     theme: "light",
     motion: false
   });
-  assert.equal(a.blur, 40);
-  assert.equal(a.displacement, 0);
+  assert.equal(a.blur, 30);
+  assert.equal(a.refraction, 0);
   assert.equal(a.tint, DEFAULT_APPEARANCE.tint);
-  assert.equal(a.material, "standard");
   assert.equal(a.accent, DEFAULT_APPEARANCE.accent);
   assert.equal(a.theme, "light");
   assert.equal(a.motion, false);

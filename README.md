@@ -26,12 +26,13 @@ Hover over — or select — any price on any webpage, and it instantly shows th
 
 ## Features
 
-- 🖱️ **Hover to convert** — hover any detected price and see every conversion in a floating Liquid Glass tooltip
+- 🖱️ **Hover to convert** — hover any detected price and see every conversion, with flags, in a floating Liquid Glass tooltip
 - ✂️ **Text selection mode** — highlight any text containing a price and the tooltip appears at your cursor
 - 💱 **Multi-currency** — up to 10 target currencies at once, from a catalog of 50
-- 🔢 **Live popup converter** — converts as you type, shows the amount in all your currencies, copy and chain results
+- 🔢 **Live popup converter** — converts as you type, searchable currency picker with flags, shows the amount in all your currencies
 - 🕘 **Recent conversions** — kept across popup sessions
-- ✨ **Liquid Glass design** — real edge refraction, chromatic aberration, cursor-following highlights and elastic motion, all tunable in Settings (presets, sliders, light/dark/auto, accent colours)
+- 🔎 **Smart detection** — handles `1.200,50 €`, `₹1,23,456`, `CHF 1'234.50`, prices split across elements (Amazon-style) and prices that update live; ambiguous `$`/`¥`/`kr` are resolved from site rules, page language and the site's country, and the tooltip says when it assumed
+- ✨ **Liquid Glass design** — Apple-inspired: lens refraction at the edges, a specular rim and subtle colour fringing, tunable in Settings (Clear / Regular / Frosted / Solid, sliders, light/dark/auto, accent colours) with a live, draggable preview
 - 🔑 **No API key** — keyless reference rates from ExchangeRate-API with an automatic fallback provider
 - 📴 **Works offline** — one cached snapshot per currency; when offline you see the last rates, clearly labelled
 - 🌐 **Site rules** — tell it what `$` means on a given site (e.g. `amazon.ca → CAD`)
@@ -179,11 +180,11 @@ npm run build       # writes the unpacked extension to dist/
 |---|---|
 | `manifest.json` | MV3 manifest, permissions, entry points |
 | `background.js` | Service worker: validated messages, rate snapshot cache |
-| `content.js`, `priceDetector.js` | Page runtime: price detection, hover/selection, live settings |
+| `content.js` | Page runtime: price detection, hover/selection, live settings |
 | `tooltip.js` | Shadow-DOM Liquid Glass tooltip |
 | `popup.*`, `options.*` | Popup converter and settings page |
-| `src/shared/` | Currency catalog, contracts, validation, parser, formatting, rates |
-| `src/ui/` | Glass engine, appearance settings, tooltip view, DOM helpers |
+| `src/shared/` | Currency catalog, contracts, validation, parser, currency resolver, formatting, rates |
+| `src/ui/` | Glass engine, appearance settings, tooltip view, flags, DOM helpers |
 | `tests/` | Unit tests, fixtures, and the Chrome smoke test |
 
 Design and planning docs: [Architecture](ARCHITECTURE.md) · [Decisions](DECISIONS.md) · [Features](FEATURES.md) · [Roadmap](ROADMAP.md) · [Implementation plan](IMPLEMENTATION_PLAN.md) · [Audit](PROJECT_AUDIT.md)
@@ -204,3 +205,4 @@ No account, no analytics, no telemetry. Page text is processed locally and never
 
 - Rates by [ExchangeRate-API](https://www.exchangerate-api.com), with [fawazahmed0/exchange-api](https://github.com/fawazahmed0/exchange-api) as a fallback.
 - Liquid Glass refraction technique adapted from [liquid-glass-react](https://github.com/rdev/liquid-glass-react) (MIT).
+- Flags from [flag-icons](https://github.com/lipis/flag-icons) (MIT); [Inter](https://rsms.me/inter/) (OFL) on non-Apple platforms, SF Pro on Apple devices.

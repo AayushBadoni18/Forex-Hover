@@ -1,59 +1,60 @@
 /** User-tunable Liquid Glass appearance, stored in chrome.storage.sync as `appearance`. */
 
-export const MATERIALS = ["standard", "prominent", "polar", "frost"] as const;
 export const THEMES = ["auto", "light", "dark"] as const;
-export const ACCENTS = ["#30d158", "#0a84ff", "#bf5af2", "#ff9f0a", "#ff375f", "#64d2ff"] as const;
+// Apple system colours: blue, green, indigo, purple, orange, pink, graphite.
+export const ACCENTS = ["#0a84ff", "#30d158", "#5e5ce6", "#bf5af2", "#ff9f0a", "#ff375f", "#8e8e93"] as const;
 
 export interface Appearance {
   theme: (typeof THEMES)[number];
-  material: (typeof MATERIALS)[number];
-  displacement: number;
+  refraction: number;
+  depth: number;
   blur: number;
   saturation: number;
   aberration: number;
+  specular: number;
+  tint: number;
   elasticity: number;
   radius: number;
-  tint: number;
-  accent: (typeof ACCENTS)[number];
-  specular: boolean;
-  motion: boolean;
   scale: number;
+  accent: (typeof ACCENTS)[number];
+  motion: boolean;
 }
 
 /** Slider ranges: [min, max, step]. Also the clamp bounds for stored values. */
 export const RANGES = {
-  displacement: [0, 150, 1],
-  blur: [0, 40, 1],
-  saturation: [100, 250, 5],
-  aberration: [0, 10, 0.5],
-  elasticity: [0, 0.6, 0.01],
-  radius: [10, 36, 1],
+  refraction: [0, 150, 1],
+  depth: [0.1, 0.5, 0.01],
+  blur: [0, 30, 0.5],
+  saturation: [100, 220, 5],
+  aberration: [0, 6, 0.25],
+  specular: [0, 1, 0.05],
   tint: [0, 0.8, 0.01],
+  elasticity: [0, 0.4, 0.01],
+  radius: [10, 32, 1],
   scale: [0.85, 1.25, 0.05]
 } as const satisfies Partial<Record<keyof Appearance, readonly [number, number, number]>>;
 
 export const DEFAULT_APPEARANCE: Appearance = {
   theme: "auto",
-  material: "standard",
-  displacement: 70,
-  blur: 14,
-  saturation: 160,
-  aberration: 2,
-  elasticity: 0.15,
+  refraction: 90,
+  depth: 0.3,
+  blur: 3,
+  saturation: 170,
+  aberration: 1.5,
+  specular: 0.75,
+  tint: 0.16,
+  elasticity: 0,
   radius: 22,
-  tint: 0.3,
-  accent: "#30d158",
-  specular: true,
-  motion: true,
-  scale: 1
+  scale: 1,
+  accent: "#0a84ff",
+  motion: true
 };
 
 export const PRESETS: Record<string, Partial<Appearance>> = {
-  Liquid: {},
-  Frosted: { material: "frost", blur: 28, tint: 0.45, aberration: 0 },
-  Prominent: { material: "prominent", displacement: 110, aberration: 4, blur: 10 },
-  Crystal: { material: "polar", displacement: 90, blur: 3, tint: 0.12, saturation: 200 },
-  Minimal: { material: "frost", blur: 20, tint: 0.65, elasticity: 0, specular: false }
+  Clear: { blur: 1, tint: 0.06, refraction: 100, depth: 0.36, specular: 0.9 },
+  Regular: {},
+  Frosted: { blur: 16, tint: 0.34, refraction: 55, specular: 0.55, aberration: 0.5 },
+  Solid: { blur: 30, tint: 0.78, refraction: 0, aberration: 0, specular: 0.35 }
 };
 
 export function normalizeAppearance(raw: unknown): Appearance {
@@ -66,9 +67,7 @@ export function normalizeAppearance(raw: unknown): Appearance {
   const pick = <T extends string>(list: readonly T[], value: unknown, fallback: T) =>
     list.includes(value as T) ? (value as T) : fallback;
   out.theme = pick(THEMES, input.theme, out.theme);
-  out.material = pick(MATERIALS, input.material, out.material);
   out.accent = pick(ACCENTS, input.accent, out.accent);
-  if (typeof input.specular === "boolean") out.specular = input.specular;
   if (typeof input.motion === "boolean") out.motion = input.motion;
   return out;
 }

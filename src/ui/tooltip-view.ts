@@ -1,6 +1,7 @@
-import { CURRENCY_BY_CODE } from "../shared/currencies.ts";
+import { CURRENCY_BY_CODE, isCurrencyCode } from "../shared/currencies.ts";
 import { formatMoney } from "../shared/format.ts";
-import { ageLabel, countUp, h } from "./dom.ts";
+import { ageLabel, h } from "./dom.ts";
+import { flag, FLAG_CSS } from "./flag.ts";
 
 /** Tooltip styles shared by the page tooltip and the settings preview. */
 export const TOOLTIP_CSS = `
@@ -9,46 +10,44 @@ export const TOOLTIP_CSS = `
 .pop {
   zoom: var(--ui-scale, 1);
   opacity: 0;
-  transform: translateY(8px) scale(0.92);
+  transform: scale(0.98);
   transform-origin: top left;
-  transition: opacity 0.18s var(--ease), transform 0.45s var(--spring);
+  transition: opacity 0.14s var(--ease), transform 0.14s var(--ease);
 }
-.pop.up { transform-origin: bottom left; transform: translateY(-8px) scale(0.92); }
+.pop.up { transform-origin: bottom left; }
 .pop.visible { opacity: 1; transform: none; }
-.card { min-width: 248px; max-width: 360px; padding: 14px 14px 10px; font-size: 13px; line-height: 1.35; }
-.badge {
-  display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px;
-  font-size: 10.5px; font-weight: 600; letter-spacing: 0.2px; color: var(--fg-2);
-  padding: 3px 8px; border-radius: 999px; background: var(--fill);
-}
-.head { display: flex; align-items: baseline; gap: 8px; padding: 0 2px 10px; }
-.from { font-size: 21px; font-weight: 650; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; }
-.chip {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.6px; color: var(--fg-2);
-  padding: 2px 7px; border-radius: 999px; border: 1px solid var(--hairline);
-}
-.rows { display: flex; flex-direction: column; gap: 2px; }
-.row {
-  display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px;
-  padding: 7px 8px; border-radius: 12px; background: var(--fill);
-  animation: rowIn 0.5s var(--spring) both; animation-delay: calc(var(--i) * 40ms);
-}
-.flag { font-size: 17px; line-height: 1; }
-.code { font-size: 12px; font-weight: 650; letter-spacing: 0.3px; }
-.name { font-size: 10.5px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.val { text-align: right; }
-.amount { font-size: 15px; font-weight: 650; letter-spacing: -0.2px; color: var(--accent-text); font-variant-numeric: tabular-nums; }
-.rate { font-size: 10px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
-.na { font-size: 11px; color: var(--fg-3); text-align: right; }
-.foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 4px 0; font-size: 10px; color: var(--fg-3); }
-.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 5px; box-shadow: 0 0 8px var(--accent); }
-.dot.stale { background: #ff9f0a; box-shadow: 0 0 8px #ff9f0a; }
-.skel { height: 34px; border-radius: 12px; background: linear-gradient(90deg, var(--fill) 0%, var(--fill-2) 50%, var(--fill) 100%); background-size: 200% 100%; animation: shimmer 1.1s linear infinite; }
-.skel.short { height: 22px; width: 55%; margin-bottom: 10px; }
-.err { padding: 4px 2px 6px; color: #ff6961; font-size: 12.5px; }
-@keyframes rowIn { from { opacity: 0; transform: translateY(6px) scale(0.97); } }
-@keyframes shimmer { to { background-position: -200% 0; } }
+.tt-card { width: 272px; padding: 12px 14px 10px; font-size: 13px; line-height: 1.3; }
+.tt-head { display: flex; align-items: center; gap: 8px; }
+.tt-from { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.tt-code-chip { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--fg-2); letter-spacing: 0.02em; }
+.tt-note { margin-top: 3px; font-size: 11px; color: var(--fg-2); }
+.tt-badge { font-size: 11px; color: var(--fg-2); margin-bottom: 4px; }
+.tt-rows { margin-top: 8px; border-top: 0.5px solid var(--hairline); }
+.tt-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--hairline); }
+.tt-row:last-child { border-bottom: 0; }
+.tt-label { min-width: 0; flex: 1; }
+.tt-code { font-size: 13px; font-weight: 600; }
+.tt-name { font-size: 11px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tt-val { text-align: right; }
+.tt-amount { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.tt-rate { font-size: 10.5px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.tt-na { font-size: 12px; color: var(--fg-3); }
+.tt-foot { display: flex; justify-content: space-between; gap: 8px; padding-top: 7px; border-top: 0.5px solid var(--hairline); font-size: 10.5px; color: var(--fg-3); }
+.tt-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #30d158; margin-right: 5px; vertical-align: 1px; }
+.tt-dot.tt-stale { background: #ff9f0a; }
+.tt-skel { height: 14px; border-radius: 7px; background: var(--fill); margin: 10px 0; }
+.tt-skel.tt-wide { height: 22px; width: 60%; margin-top: 2px; }
+.tt-err { padding: 2px 0 4px; color: #ff453a; font-size: 13px; }
+${FLAG_CSS}
 `;
+
+const REASONS: Record<string, string> = {
+  "domain-override": "your site rule",
+  "document-region": "this page's language",
+  "hostname-region": "this site's country",
+  "user-default": "your home currency",
+  "first-candidate": "the most common use"
+};
 
 export interface ResultView {
   amount: number;
@@ -57,40 +56,44 @@ export interface ResultView {
   isSelection?: boolean;
   stale?: boolean;
   source?: string;
-  instant?: boolean;
+  reason?: string;
 }
 
-export function buildResult({ amount, originalCurrency, rates, isSelection, stale, source, instant = false }: ResultView) {
+const money = (n: number, code: string) => (isCurrencyCode(code) ? formatMoney(n, code) : `${n.toFixed(2)} ${code}`);
+
+export function buildLoading() {
+  return [h("div", { class: "tt-skel tt-wide" }), h("div", { class: "tt-skel" }), h("div", { class: "tt-skel" })];
+}
+
+export function buildResult({ amount, originalCurrency, rates, isSelection, stale, source, reason }: ResultView) {
   const entries = Object.entries(rates);
   const timestamps = entries.flatMap(([, r]) => (r.success && r.timestamp ? [r.timestamp] : []));
   const isStale = stale || entries.some(([, r]) => r.stale);
-  const money = (n: number, code: string) => formatMoney(n, code as never);
+  const assumed = reason && REASONS[reason];
 
-  const rows = entries.map(([code, entry], i) => {
-    const meta = (CURRENCY_BY_CODE as Record<string, { flag: string; name: string } | undefined>)[code];
-    const label = h("div", {}, h("div", { class: "code" }, code), h("div", { class: "name" }, meta?.name ?? ""));
-    const flag = h("span", { class: "flag" }, meta?.flag ?? "🌐");
+  const rows = entries.map(([code, entry]) => {
+    const meta = isCurrencyCode(code) ? CURRENCY_BY_CODE[code] : undefined;
+    const label = h("div", { class: "tt-label" }, h("div", { class: "tt-code" }, code), h("div", { class: "tt-name" }, meta?.name ?? ""));
     if (!entry.success || !entry.rate) {
-      return h("div", { class: "row", style: `--i:${i}` }, flag, label, h("div", { class: "na" }, "unavailable"));
+      return h("div", { class: "tt-row" }, flag(code), label, h("div", { class: "tt-na" }, "Unavailable"));
     }
-    const amountEl = h("div", { class: "amount" });
-    countUp(amountEl, amount * entry.rate, (n) => money(n, code), instant);
-    return h("div", { class: "row", style: `--i:${i}` }, flag, label,
-      h("div", { class: "val" }, amountEl, h("div", { class: "rate" }, `1 ${originalCurrency} = ${entry.rate.toPrecision(5)}`))
+    return h("div", { class: "tt-row" }, flag(code), label,
+      h("div", { class: "tt-val" },
+        h("div", { class: "tt-amount" }, money(amount * entry.rate, code)),
+        h("div", { class: "tt-rate" }, `1 ${originalCurrency} = ${entry.rate.toPrecision(5)}`)
+      )
     );
   });
 
   const updated = timestamps.length ? ageLabel(Math.max(...timestamps)) : "";
   return [
-    isSelection ? h("div", { class: "badge" }, "✂︎ Selection") : null,
-    h("div", { class: "head" },
-      h("span", { class: "from" }, money(amount, originalCurrency)),
-      h("span", { class: "chip" }, originalCurrency)
-    ),
-    h("div", { class: "rows" }, ...rows),
-    h("div", { class: "foot" },
-      h("span", {}, h("span", { class: `dot${isStale ? " stale" : ""}` }), isStale ? `Offline · rates from ${updated}` : `Reference rate · ${updated}`),
-      h("span", {}, source === "currency-api" ? "fawazahmed0/currency-api" : "Rates by ExchangeRate-API")
+    isSelection ? h("div", { class: "tt-badge" }, "Selected text") : null,
+    h("div", { class: "tt-head" }, flag(originalCurrency), h("span", { class: "tt-from" }, money(amount, originalCurrency)), h("span", { class: "tt-code-chip" }, originalCurrency)),
+    assumed ? h("div", { class: "tt-note" }, `Read as ${originalCurrency} from ${assumed}`) : null,
+    h("div", { class: "tt-rows" }, ...rows),
+    h("div", { class: "tt-foot" },
+      h("span", {}, h("span", { class: `tt-dot${isStale ? " tt-stale" : ""}` }), isStale ? `Offline · ${updated}` : `Updated ${updated}`),
+      h("span", {}, source === "open-er-api" ? "Rates by ExchangeRate-API" : "Daily reference rates")
     )
   ].filter((n) => n !== null);
 }

@@ -34,7 +34,7 @@ test("the unpacked extension starts and renders its settings surfaces", async (t
 
   for (const [path, selector] of [
     ["popup.html", "#amount"],
-    ["options.html", "#grid .cur"]
+    ["options.html", "#all .row"]
   ] as const) {
     const page = await browser.newPage();
     const pageErrors: string[] = [];

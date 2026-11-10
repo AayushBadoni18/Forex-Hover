@@ -22,22 +22,6 @@ export function h<K extends keyof HTMLElementTagNameMap>(
   return el;
 }
 
-/** Animates a number into an element's text. Respects reduced motion via `instant`. */
-export function countUp(el: Element, to: number, format: (n: number) => string, instant = false, ms = 520) {
-  if (instant || !Number.isFinite(to)) {
-    el.textContent = format(to);
-    return;
-  }
-  const start = performance.now();
-  const step = (now: number) => {
-    const t = Math.min(1, (now - start) / ms);
-    const eased = 1 - Math.pow(1 - t, 4);
-    el.textContent = format(to * eased);
-    if (t < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-
 export function ageLabel(timestamp: number, now = Date.now()) {
   const mins = Math.max(0, Math.round((now - timestamp) / 60000));
   if (mins < 1) return "just now";

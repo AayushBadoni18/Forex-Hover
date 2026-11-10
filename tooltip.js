@@ -5,9 +5,9 @@
  * Public API on window.ForexTooltip is unchanged for content.js.
  */
 import { DEFAULT_APPEARANCE } from "./src/ui/appearance.ts";
-import { h, prefersReducedMotion } from "./src/ui/dom.ts";
+import { h } from "./src/ui/dom.ts";
 import { applyAppearance, GLASS_CSS, mountGlass } from "./src/ui/glass.ts";
-import { buildResult, TOOLTIP_CSS } from "./src/ui/tooltip-view.ts";
+import { buildLoading, buildResult, TOOLTIP_CSS } from "./src/ui/tooltip-view.ts";
 
 window.ForexTooltip = (() => {
   let host = null;
@@ -24,10 +24,14 @@ window.ForexTooltip = (() => {
     if (host) return;
     host = document.createElement("div");
     host.setAttribute("data-fhp-host", "true");
+    // @font-face is ignored inside shadow roots, so declare the bundled font on the page.
+    const font = document.createElement("style");
+    font.textContent = `@font-face{font-family:"FHP Inter";src:url("${chrome.runtime.getURL("fonts/inter.woff2")}") format("woff2");font-weight:100 900;font-display:swap}`;
+    (document.head || document.documentElement).append(font);
     const shadow = host.attachShadow({ mode: "closed" });
     shadow.append(h("style", {}, GLASS_CSS + TOOLTIP_CSS));
     body = h("div");
-    card = h("div", { class: "card", role: "status", "aria-live": "polite" }, body);
+    card = h("div", { class: "tt-card", role: "status", "aria-live": "polite" }, body);
     pop = h("div", { class: "pop" }, card);
     root = h("div", { class: "root" }, pop);
     shadow.append(root);
@@ -38,7 +42,7 @@ window.ForexTooltip = (() => {
   }
 
   // Over arbitrary pages the tooltip needs more body than the panels do.
-  const onPage = (a) => ({ ...a, tint: Math.min(0.85, a.tint + 0.35) });
+  const onPage = (a) => ({ ...a, tint: Math.min(0.85, a.tint + 0.3) });
 
   function setAppearance(next) {
     appearance = next;
@@ -73,22 +77,23 @@ window.ForexTooltip = (() => {
     anchor = anchorOrCoords;
     if (appearance.theme === "auto") root.dataset.theme = pageIsLight(anchorOrCoords) ? "light" : "dark";
     delete card.dataset.lgPaused;
+    if (!pop.classList.contains("visible")) glass.pulse();
     requestAnimationFrame(() => pop.classList.add("visible"));
   }
 
   function showLoading(anchorOrCoords) {
     show(anchorOrCoords);
-    render(h("div", { class: "skel short" }), h("div", { class: "rows" }, h("div", { class: "skel" }), h("div", { class: "skel" })));
+    render(...buildLoading());
   }
 
   function showMultiResult(view) {
     if (!body) return;
-    render(...buildResult({ ...view, instant: !appearance.motion || prefersReducedMotion() }));
+    render(...buildResult(view));
   }
 
   function showError(message) {
     if (!body) return;
-    render(h("div", { class: "err" }, `⚠︎ ${message}`));
+    render(h("div", { class: "tt-err" }, message));
   }
 
   function hide() {
@@ -96,7 +101,7 @@ window.ForexTooltip = (() => {
     if (!pop) return;
     pop.classList.remove("visible");
     card.dataset.lgPaused = "1";
-    hideTimer = setTimeout(() => body?.replaceChildren(), 260);
+    hideTimer = setTimeout(() => body?.replaceChildren(), 160);
   }
 
   function position() {
