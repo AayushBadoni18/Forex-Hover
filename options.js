@@ -68,6 +68,10 @@ function go(page) {
   history.replaceState(null, "", `#${page}`);
 }
 navButtons.forEach((b) => b.addEventListener("click", () => go(b.dataset.page)));
+addEventListener("hashchange", () => {
+  const page = location.hash.slice(1);
+  if (navButtons.some((b) => b.dataset.page === page)) go(page);
+});
 
 // ─── Currencies ───────────────────────────────────────────────────────────
 function renderCurrencies() {
@@ -159,7 +163,7 @@ async function loadPreviewRates() {
   renderPreview();
 }
 function renderPreview() {
-  const shown = targets.filter((c) => c !== "USD").slice(0, 4);
+  const shown = targets.filter((c) => c !== "USD").slice(0, 3);
   const codes = shown.length ? shown : ["EUR", "GBP", "INR"];
   const rates = Object.fromEntries(codes.map((code) => {
     const live = liveRates?.rates?.[code];
