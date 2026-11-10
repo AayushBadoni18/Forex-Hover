@@ -35,7 +35,8 @@ export const CONVERTER_CSS = `
 .cv .amount::placeholder { color: var(--fg-3); }
 .cv .amount::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
 .cv .result { color: var(--accent-text); }
-.cv .divider { position: relative; height: 0; border-top: 0.5px solid var(--hairline); margin: 0 4px; }
+/* Above the rows around it, so the round swap button is never covered. */
+.cv .divider { position: relative; z-index: 5; height: 0; border-top: 0.5px solid var(--hairline); margin: 0 4px; }
 .cv .swap {
   position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); width: 30px; height: 30px; padding: 0;
   border-radius: 50%; border: 0; background: var(--fill-2); backdrop-filter: blur(8px);

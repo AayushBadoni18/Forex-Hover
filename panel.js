@@ -7,6 +7,7 @@
  * the site shows behind it. Drag it by the header; the position is remembered.
  */
 import { normalizeAppearance } from "./src/ui/appearance.ts";
+import { ART_CSS, panelArt } from "./src/ui/art.ts";
 import { CONTROLS_CSS } from "./src/ui/controls.ts";
 import { CONVERTER_CSS, createConverter } from "./src/ui/converter.ts";
 import { h } from "./src/ui/dom.ts";
@@ -41,6 +42,7 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
   let converter = null;
   let appearance = normalizeAppearance(null);
   let pos = null;
+  let anchored = true; // follows the top-right corner until the user drags it
   let lastFocus = null;
 
   function injectFont() {
@@ -86,6 +88,10 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
     shell.style.setProperty("--y", `${pos.y}px`);
   }
 
+  function placeDefault() {
+    place(innerWidth - (shell.offsetWidth || WIDTH) - MARGIN, MARGIN);
+  }
+
   function enableDrag(handle) {
     let start = null;
     handle.addEventListener("pointerdown", (e) => {
@@ -101,6 +107,7 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
       if (!start) return;
       start = null;
       shell.classList.remove("dragging");
+      anchored = false;
       chrome.storage.local.set({ panelPos: pos });
       if (appearance.theme === "auto") applyTheme();
     };
@@ -118,20 +125,23 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
     host = document.createElement("div");
     host.setAttribute("data-fhp-host", "panel");
     const shadow = host.attachShadow({ mode: "closed" });
-    shadow.append(h("style", {}, GLASS_CSS + CONTROLS_CSS + FLAG_CSS + CONVERTER_CSS + PANEL_CSS));
+    shadow.append(h("style", {}, GLASS_CSS + CONTROLS_CSS + FLAG_CSS + CONVERTER_CSS + ART_CSS + PANEL_CSS));
     converter = createConverter({
       appearance,
       onOpenSettings: () => chrome.runtime.sendMessage({ type: "OPEN_OPTIONS" }),
       onClose: () => close()
     });
-    shell = h("div", { class: "shell", role: "dialog", "aria-label": "Forex Hover converter" }, converter.root);
+    // Background art sits behind the glass cards; with it off, the glass refracts the page itself.
+    shell = h("div", { class: "shell", role: "dialog", "aria-label": "Forex Hover converter" }, panelArt(), converter.root);
     shadow.append(shell);
     document.documentElement.append(host);
     const saved = panelPos && Number.isFinite(panelPos.x) && Number.isFinite(panelPos.y) ? panelPos : null;
-    place(saved ? saved.x : innerWidth - WIDTH - MARGIN, saved ? saved.y : MARGIN);
+    anchored = !saved;
+    if (saved) place(saved.x, saved.y);
+    else placeDefault();
     applyTheme();
     enableDrag(converter.handle);
-    addEventListener("resize", () => pos && place(pos.x, pos.y));
+    addEventListener("resize", () => (anchored ? placeDefault() : pos && place(pos.x, pos.y)));
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === "sync" && changes.appearance && host) {
         appearance = normalizeAppearance(changes.appearance.newValue);
@@ -144,6 +154,7 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
     lastFocus = document.activeElement;
     if (!host) await create();
     host.hidden = false;
+    if (anchored) placeDefault();
     requestAnimationFrame(() => {
       shell.classList.add("open");
       converter.pulse();
