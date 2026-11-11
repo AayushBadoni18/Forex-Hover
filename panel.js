@@ -6,6 +6,7 @@
  * panel inside the page (closed shadow root), where the glass bends whatever
  * the site shows behind it. Drag it by the header; the position is remembered.
  */
+import { normalizeDomain } from "./src/shared/currency-resolver.ts";
 import { normalizeAppearance } from "./src/ui/appearance.ts";
 import { ART_CSS, mountScene, panelArt } from "./src/ui/art.ts";
 import { CONTROLS_CSS } from "./src/ui/controls.ts";
@@ -132,7 +133,8 @@ import { applyAppearance, GLASS_CSS } from "./src/ui/glass.ts";
     converter = createConverter({
       appearance,
       onOpenSettings: () => chrome.runtime.sendMessage({ type: "OPEN_OPTIONS" }),
-      onClose: () => close()
+      onClose: () => close(),
+      site: normalizeDomain(location.hostname) ?? undefined
     });
     // Background art sits behind the glass cards; with it off, the glass refracts the page itself.
     art = panelArt();

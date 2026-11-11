@@ -49,6 +49,12 @@ async function fromCurrencyApi(fetchFn: Fetch, base: CurrencyCode) {
   return { rates: pickRates(data?.[key], (code) => code.toLowerCase()), source: "currency-api" as const };
 }
 
+/** USD rates as published on a past day ("2026-11-04"); currency-api keeps every day's file. */
+export async function fetchHistoricalRates(date: string, fetchFn: Fetch = fetch): Promise<RateSnapshot["rates"]> {
+  const data = await getJson(fetchFn, `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${date}/v1/currencies/usd.json`);
+  return { ...pickRates(data?.usd, (code) => code.toLowerCase()), USD: 1 };
+}
+
 export async function fetchSnapshot(base: CurrencyCode, fetchFn: Fetch = fetch, now = Date.now()) {
   let result;
   try {

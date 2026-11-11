@@ -6,18 +6,20 @@ Forex Hover Pro does not collect, store, sell or share any personal data. There 
 
 ## What stays on your device
 
-- **Settings** (your currencies, appearance, site rules) are saved with the browser's extension storage. If browser sync is on, the browser syncs them between your own devices.
+- **Settings** (your currencies, appearance, card fee, site rules and paused sites) are saved with the browser's extension storage. If browser sync is on, the browser syncs them between your own devices.
 - **Recent conversions**, the converter's position and the cached exchange rates are saved locally and never leave your device.
 - **Page text** is read locally to find prices. It is never stored or sent anywhere.
 
 ## Network requests
 
-The extension makes one kind of request: downloading the day's exchange rates as JSON.
+The extension makes one kind of request: downloading exchange rates as JSON (today's, and the rates from a week ago for the weekly trend).
 
 - `cdn.jsdelivr.net` (currency-api by Fawaz Ahmed), the primary source
 - `open.er-api.com` (ExchangeRate-API), used only if the primary source fails
 
 These requests carry no information about you, the pages you visit or the prices you look at. As with any web request, the provider's server sees your IP address.
+
+What you type after `fx` in the address bar is converted inside the extension and is not sent anywhere.
 
 ## Permissions
 

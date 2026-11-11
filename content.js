@@ -10,9 +10,9 @@
  *
  * Hover uses one delegated listener; underlines are one stylesheet rule.
  */
-import { MAX_DOMAIN_OVERRIDES } from "./src/shared/contracts.ts";
+import { MAX_DOMAIN_OVERRIDES, normalizeFee } from "./src/shared/contracts.ts";
 import { isCurrencyCode } from "./src/shared/currencies.ts";
-import { resolveCurrency } from "./src/shared/currency-resolver.ts";
+import { isSiteListed, resolveCurrency } from "./src/shared/currency-resolver.ts";
 import { detectPriceCandidates } from "./src/shared/price-parser.ts";
 import { normalizeAppearance } from "./src/ui/appearance.ts";
 
@@ -28,7 +28,10 @@ import { normalizeAppearance } from "./src/ui/appearance.ts";
   const HAS_SIGNAL = /\d|[$€£¥₹₩₺฿₱₫₪₦₴₽৳₨₵]/;
 
   const state = {
-    enabled: true,
+    enabled: true, // on overall and not paused on this site
+    on: true,
+    paused: false,
+    fee: 0,
     selectionMode: true,
     underline: true,
     targetCurrencies: ["USD", "EUR", "GBP"],
@@ -58,7 +61,10 @@ import { normalizeAppearance } from "./src/ui/appearance.ts";
 
   // ─── Settings ─────────────────────────────────────────────────────────────
   function applyPrefs(prefs) {
-    if ("enabled" in prefs) state.enabled = prefs.enabled !== false;
+    if ("enabled" in prefs) state.on = prefs.enabled !== false;
+    if ("pausedSites" in prefs) state.paused = isSiteListed(location.hostname, prefs.pausedSites);
+    state.enabled = state.on && !state.paused;
+    if ("feePercent" in prefs) state.fee = normalizeFee(prefs.feePercent);
     if ("selectionMode" in prefs) state.selectionMode = prefs.selectionMode !== false;
     if ("underline" in prefs) state.underline = prefs.underline !== false;
     const targets = Array.isArray(prefs.targetCurrencies) ? prefs.targetCurrencies.filter(isCurrencyCode) : [];
@@ -345,6 +351,7 @@ import { normalizeAppearance } from "./src/ui/appearance.ts";
         source: result.source,
         isSelection,
         reason,
+        fee: state.fee,
         anchor
       });
     } catch (err) {
@@ -418,18 +425,18 @@ import { normalizeAppearance } from "./src/ui/appearance.ts";
   function onStorageChanged(changes, area) {
     if (area !== "sync" || !contextAlive) return;
     if (changes.appearance) window.ForexTooltip.setAppearance(normalizeAppearance(changes.appearance.newValue));
-    const keys = ["enabled", "targetCurrencies", "underline", "selectionMode", "domainOverrides"].filter((k) => k in changes);
+    const keys = ["enabled", "pausedSites", "feePercent", "targetCurrencies", "underline", "selectionMode", "domainOverrides"].filter((k) => k in changes);
     if (!keys.length) return;
     applyPrefs(Object.fromEntries(keys.map((k) => [k, changes[k].newValue])));
     if (keys.length === 1 && keys[0] === "underline") return renderStyle();
-    if (keys.some((k) => k !== "selectionMode")) restart();
+    if (keys.some((k) => k !== "selectionMode" && k !== "feePercent")) restart();
   }
 
   (async () => {
     if (!isContextValid()) return;
     try {
       const prefs = await chrome.storage.sync.get([
-        "enabled", "selectionMode", "underline", "targetCurrencies", "targetCurrency", "domainOverrides", "appearance"
+        "enabled", "pausedSites", "feePercent", "selectionMode", "underline", "targetCurrencies", "targetCurrency", "domainOverrides", "appearance"
       ]);
       applyPrefs(prefs);
       window.ForexTooltip.setAppearance(normalizeAppearance(prefs.appearance));

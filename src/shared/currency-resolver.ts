@@ -46,6 +46,12 @@ export function normalizeDomain(input: string): string | null {
   return host;
 }
 
+/** True when the hostname is one of the listed sites or a subdomain of one. */
+export function isSiteListed(hostname: string, sites: unknown): boolean {
+  const host = hostname.toLowerCase().replace(/^www\./, "");
+  return Array.isArray(sites) && sites.some((d) => typeof d === "string" && d && (host === d || host.endsWith(`.${d}`)));
+}
+
 function overrideFor(hostname: string, overrides: Record<string, CurrencyCode>): CurrencyCode | null {
   let best: string | null = null;
   for (const key of Object.keys(overrides)) {

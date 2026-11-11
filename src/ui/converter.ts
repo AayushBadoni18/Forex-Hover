@@ -3,6 +3,8 @@
  * window: flags, searchable picker, your currencies, persistent history.
  * Built with DOM calls only, so it can live inside any web page.
  */
+import { calc } from "../shared/calc.ts";
+import { MAX_PAUSED_SITES } from "../shared/contracts.ts";
 import { CURRENCIES, CURRENCY_BY_CODE, isCurrencyCode, type CurrencyCode } from "../shared/currencies.ts";
 import { formatMoney, formatRate } from "../shared/format.ts";
 import type { Appearance } from "./appearance.ts";
@@ -45,6 +47,12 @@ export const CONVERTER_CSS = `
 .cv .swap:hover { transform: translate(-50%, -50%) rotate(180deg); }
 .cv .swap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .cv .meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 4px 0; margin-top: 2px; border-top: 0.5px solid var(--hairline); font-size: 12px; color: var(--fg-2); }
+.cv .meta .info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cv .trend { font-size: 11.5px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.cv .site-toggle { align-self: center; display: block; font-size: 12px; padding: 6px 14px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); background: rgb(44 44 48 / 0.72); backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%); }
+/* Its own surface, so it reads over any scene or page behind the panel. */
+[data-theme="light"] .cv .site-toggle { background: rgb(255 255 255 / 0.76); }
+.cv .site-toggle:hover { filter: brightness(1.08); }
 .cv .err { color: #ff453a; font-size: 12px; padding: 6px 4px 0; }
 .cv .list-head { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px 3px; }
 .cv .list-head h2 { margin: 0; font-size: 12px; font-weight: 600; color: var(--fg-2); text-transform: uppercase; letter-spacing: 0.03em; }
@@ -80,6 +88,8 @@ export interface ConverterOptions {
   onOpenSettings(): void;
   /** Shown as a close button in the header (floating panel only). */
   onClose?(): void;
+  /** The page's site ("amazon.in"); adds a "Pause on this site" control. */
+  site?: string;
 }
 
 export interface Converter {
@@ -94,11 +104,11 @@ export interface Converter {
 }
 
 function parseAmount(text: string) {
-  const n = Number(String(text).replace(/[\s,_']/g, ""));
+  const n = calc(String(text)) ?? NaN; // "3*49.99" works too
   return Number.isFinite(n) && n > 0 && n < 1e15 ? n : null;
 }
 
-export function createConverter({ appearance, onOpenSettings, onClose }: ConverterOptions): Converter {
+export function createConverter({ appearance, onOpenSettings, onClose, site }: ConverterOptions): Converter {
   // ─── Markup ──────────────────────────────────────────────────────────────
   const status = h("p", {}, "On for web pages");
   const toggle = h("input", { type: "checkbox", role: "switch", "aria-label": "Convert prices on web pages" });
@@ -114,17 +124,19 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
 
   const fromBtn = h("button", { class: "cur", "aria-haspopup": "listbox" });
   const toBtn = h("button", { class: "cur", "aria-haspopup": "listbox" });
-  const amount = h("input", { class: "amount", inputmode: "decimal", autocomplete: "off", placeholder: "0", value: "100", "aria-label": "Amount" });
+  const amount = h("input", { class: "amount", title: "Type an amount or a sum like 3*49.99", autocomplete: "off", placeholder: "0", value: "100", "aria-label": "Amount" });
   const result = h("output", { class: "result", "aria-live": "polite" }, "—");
   const swap = h("button", { class: "swap", "aria-label": "Swap currencies" }, swapIcon());
   const rate = h("span", {}, " ");
+  const trend = h("span", { class: "trend", hidden: true });
+  const siteBtn = site ? h("button", { class: "btn site-toggle" }) : null;
   const copy = h("button", { class: "link" }, "Copy");
   const error = h("div", { class: "err", hidden: true });
   const conv = h("section", { class: "glass panel conv", "aria-label": "Converter" },
     h("div", { class: "line txt" }, fromBtn, amount),
     h("div", { class: "divider" }, swap),
     h("div", { class: "line txt" }, toBtn, result),
-    h("div", { class: "meta txt" }, rate, copy),
+    h("div", { class: "meta txt" }, h("div", { class: "info" }, rate, trend), copy),
     error
   );
 
@@ -145,6 +157,7 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
     conv,
     h("section", { class: "glass panel group", "aria-label": "Your currencies" }, h("div", { class: "list-head txt" }, h("h2", {}, "Your currencies")), also),
     h("section", { class: "glass panel group", "aria-label": "Recent conversions" }, h("div", { class: "list-head txt" }, h("h2", {}, "Recent"), clearHistory), history),
+    siteBtn,
     source,
     h("footer", { class: "made-by txt" }, "Developed by Aayush Badoni"),
     picker
@@ -185,6 +198,7 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
     const value = parseAmount(amount.value);
     const { from, to } = pair;
     error.hidden = true;
+    trend.hidden = true;
     if (!value) {
       last = null;
       result.textContent = "—";
@@ -202,6 +216,13 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
       last = { amount: value, from, to, value: value * r };
       result.textContent = formatMoney(last.value, to);
       rate.textContent = `1 ${from} = ${formatRate(r, 5)} ${to} · ${res.stale ? "offline, " : ""}${ageLabel(res.timestamp)}`;
+      const change = res.rates[to]?.change;
+      if (typeof change === "number" && Number.isFinite(change)) {
+        const pct = Math.abs(change * 100);
+        trend.textContent = pct < 0.005 ? "No change this week" : `${change > 0 ? "▲" : "▼"} ${pct.toFixed(2)}% this week`;
+        trend.title = `${to} per ${from}, compared with 7 days ago`;
+        trend.hidden = false;
+      }
       // Name whichever service supplied the numbers (ExchangeRate-API requires attribution).
       source.replaceChildren(res.source === "open-er-api"
         ? h("a", { href: "https://www.exchangerate-api.com", target: "_blank", rel: "noopener" }, "Rates by ExchangeRate-API")
@@ -339,7 +360,17 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
     chrome.storage.local.set({ history: items });
     renderHistory();
   });
-  const setStatus = () => (status.textContent = toggle.checked ? "On for web pages" : "Off for web pages");
+  let pausedSites: string[] = [];
+  const setStatus = () => {
+    const paused = !!site && pausedSites.includes(site);
+    status.textContent = !toggle.checked ? "Off for web pages" : paused ? "Paused on this site" : "On for web pages";
+    if (siteBtn) siteBtn.textContent = `${paused ? "Resume" : "Pause"} on ${site}`;
+  };
+  siteBtn?.addEventListener("click", () => {
+    pausedSites = pausedSites.includes(site!) ? pausedSites.filter((d) => d !== site) : [...pausedSites, site!].slice(-MAX_PAUSED_SITES);
+    chrome.storage.sync.set({ pausedSites });
+    setStatus();
+  });
   toggle.addEventListener("change", () => { chrome.storage.sync.set({ enabled: toggle.checked }); setStatus(); });
   settingsBtn.addEventListener("click", onOpenSettings);
   closeBtn?.addEventListener("click", () => onClose?.());
@@ -355,10 +386,11 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
   // ─── Boot ────────────────────────────────────────────────────────────────
   (async () => {
     const [sync, local] = await Promise.all([
-      chrome.storage.sync.get(["enabled", "targetCurrencies", "targetCurrency"]),
+      chrome.storage.sync.get(["enabled", "pausedSites", "targetCurrencies", "targetCurrency"]),
       chrome.storage.local.get(["popupState", "history"])
     ]);
     toggle.checked = sync.enabled !== false;
+    if (Array.isArray(sync.pausedSites)) pausedSites = sync.pausedSites.filter((d): d is string => typeof d === "string");
     setStatus();
     const saved = Array.isArray(sync.targetCurrencies) ? sync.targetCurrencies.filter(isCurrencyCode) : [];
     if (saved.length) targets = saved;

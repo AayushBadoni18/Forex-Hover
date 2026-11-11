@@ -76,6 +76,8 @@ export interface ResultView {
   stale?: boolean;
   source?: string;
   reason?: string;
+  /** Card fee in percent, added to every converted amount. */
+  fee?: number;
 }
 
 const money = (n: number, code: string) => (isCurrencyCode(code) ? formatMoney(n, code) : `${n.toFixed(2)} ${code}`);
@@ -91,7 +93,7 @@ export function buildLoading() {
   return [h("div", { class: "tt-skel tt-wide" }), h("div", { class: "tt-skel" }), h("div", { class: "tt-skel" })];
 }
 
-export function buildResult({ amount, originalCurrency, rates, isSelection, stale, source, reason }: ResultView) {
+export function buildResult({ amount, originalCurrency, rates, isSelection, stale, source, reason, fee = 0 }: ResultView) {
   const entries = Object.entries(rates);
   const timestamps = entries.flatMap(([, r]) => (r.success && r.timestamp ? [r.timestamp] : []));
   const isStale = stale || entries.some(([, r]) => r.stale);
@@ -112,7 +114,7 @@ export function buildResult({ amount, originalCurrency, rates, isSelection, stal
     if (!entry.success || !entry.rate) {
       return h("div", { class: "tt-row", title: nameOf(code) }, namedFlag(code), h("div", { class: "tt-na" }, "Unavailable"));
     }
-    const converted = money(amount * entry.rate, code);
+    const converted = money(amount * entry.rate * (1 + fee / 100), code);
     return h("div", { class: "tt-row", title: nameOf(code), "aria-label": `${nameOf(code)}: ${converted}` },
       namedFlag(code),
       h("div", { class: "tt-amount" }, converted),
@@ -128,7 +130,8 @@ export function buildResult({ amount, originalCurrency, rates, isSelection, stal
     h("div", { class: "tt-rows" }, ...rows),
     h("div", { class: "tt-foot" },
       h("span", {}, h("span", { class: `tt-dot${isStale ? " tt-stale" : ""}` }), isStale ? `Offline · ${updated}` : `Updated ${updated}`),
-      h("span", {}, source === "open-er-api" ? "Rates by ExchangeRate-API" : "Daily reference rates")
+      // ExchangeRate-API requires attribution, so the fee note gives way to it.
+      h("span", {}, source === "open-er-api" ? `${fee ? `+${fee}% fee · ` : ""}Rates by ExchangeRate-API` : fee ? `Includes ${fee}% card fee` : "Daily reference rates")
     )
   ].filter((n) => n !== null);
 }

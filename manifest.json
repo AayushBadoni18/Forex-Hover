@@ -65,5 +65,8 @@
       },
       "description": "Open or close the converter"
     }
+  },
+  "omnibox": {
+    "keyword": "fx"
   }
 }

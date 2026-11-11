@@ -237,6 +237,11 @@ Open `chrome://extensions`, click **Remove** on Forex Hover Pro, then delete the
 | **Read big numbers** | `$1.5M`, `$3k`, `$2.5 billion` and `₹5 crore` convert at their full value; `$25 CAD` uses the code, not a guess. |
 | **Open the converter** | Click the toolbar icon or press `Alt+Shift+F`. Drag it by its header. Close with the icon, ×, or Esc. |
 | **Swap / change currencies** | Use the ⇅ button, or click a flag to search all 57 currencies. |
+| **Convert from the address bar** | Type `fx`, a space, then `100 usd to inr`. The answer appears in the suggestions; Enter opens the converter on it. |
+| **Do sums** | The amount field takes arithmetic: `3*49.99`, `(120+30)/2`. |
+| **See the weekly trend** | Under the rate, the converter shows how the pair moved in the last 7 days. |
+| **Include your card fee** | Settings → **Behavior** → *Card fee* adds your bank's foreign-transaction percentage to converted prices. |
+| **Pause on a site** | Open the converter there and click *Pause on this site*. Manage the list in Settings → **Sites**. |
 | **Reuse a conversion** | Tap any row under *Recent* or *Your currencies*. |
 | **Choose your currencies** | Settings → **Currencies**. The first one is your home currency. |
 | **Change the look** | Settings → **Appearance**: material presets, theme, accent colour, background scene, Settings/Converter background switches, Clear liquid mode, and glass sliders. |

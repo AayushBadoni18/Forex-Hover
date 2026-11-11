@@ -3,7 +3,7 @@
  * chrome.storage.sync; open tabs react through storage.onChanged.
  */
 import "./src/ui/backdrop.css";
-import { MAX_DOMAIN_OVERRIDES, MAX_TARGET_CURRENCIES } from "./src/shared/contracts.ts";
+import { MAX_DOMAIN_OVERRIDES, MAX_TARGET_CURRENCIES, normalizeFee } from "./src/shared/contracts.ts";
 import { CURRENCIES, CURRENCY_BY_CODE, isCurrencyCode } from "./src/shared/currencies.ts";
 import { normalizeDomain } from "./src/shared/currency-resolver.ts";
 import { ACCENTS, DEFAULT_APPEARANCE, normalizeAppearance, PRESETS, RANGES, SCENES, THEMES } from "./src/ui/appearance.ts";
@@ -34,6 +34,8 @@ const SAMPLE_RATES = { EUR: 0.92, GBP: 0.79, INR: 84.1, JPY: 151.3, CAD: 1.37, A
 let appearance = DEFAULT_APPEARANCE;
 let targets = ["USD", "EUR", "GBP"];
 let overrides = {};
+let pausedSites = [];
+let fee = 0;
 let glasses = [];
 let liveRates = null;
 
@@ -188,7 +190,7 @@ function renderPreview() {
     const live = liveRates?.rates?.[code];
     return [code, live?.success ? live : { success: true, rate: SAMPLE_RATES[code] ?? 1.5, timestamp: Date.now() }];
   }));
-  $("preview-body").replaceChildren(...buildResult({ amount: 249.99, originalCurrency: "USD", rates, source: liveRates?.source }));
+  $("preview-body").replaceChildren(...buildResult({ amount: 249.99, originalCurrency: "USD", rates, source: liveRates?.source, fee }));
 }
 
 // Drag the preview card around the stage.
@@ -217,6 +219,19 @@ function renderPreview() {
 const BEHAVIOR = { "pref-enabled": "enabled", "pref-selection": "selectionMode", "pref-underline": "underline" };
 for (const [id, key] of Object.entries(BEHAVIOR)) $(id).addEventListener("change", (e) => save({ [key]: e.target.checked }));
 
+const showFee = () => {
+  $("fee").value = String(fee);
+  $("fee-out").textContent = fee ? `${fee}%` : "Off";
+};
+let feeTimer = 0;
+$("fee").addEventListener("input", (e) => {
+  fee = normalizeFee(Number(e.target.value));
+  showFee();
+  renderPreview();
+  clearTimeout(feeTimer);
+  feeTimer = setTimeout(() => save({ feePercent: fee }), 300);
+});
+
 // ─── Sites ────────────────────────────────────────────────────────────────
 function domainFromInput(input) {
   const raw = input.trim().toLowerCase();
@@ -239,6 +254,16 @@ function renderSites() {
       }, "−")
     )) : [h("div", { class: "row muted" }, "No site rules yet.")]));
 }
+function renderPaused() {
+  $("paused").replaceChildren(...(pausedSites.length ? pausedSites.map((domain) =>
+    h("div", { class: "row" },
+      h("span", { class: "text mono" }, domain),
+      h("button", {
+        class: "remove", "aria-label": `Resume on ${domain}`, title: "Resume",
+        onclick: () => { pausedSites = pausedSites.filter((d) => d !== domain); renderPaused(); save({ pausedSites }); }
+      }, "−")
+    )) : [h("div", { class: "row muted" }, "No paused sites. Open the converter on a site and choose Pause to turn prices off there.")]));
+}
 $("site-currency").replaceChildren(...CURRENCIES.map((c) => h("option", { value: c.code }, `${c.code} — ${c.name}`)));
 $("add-site").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -258,8 +283,11 @@ $("add-site").addEventListener("submit", (e) => {
 // ─── Boot ─────────────────────────────────────────────────────────────────
 (async () => {
   const data = await chrome.storage.sync.get([
-    "targetCurrencies", "targetCurrency", "domainOverrides", "enabled", "selectionMode", "underline", "appearance"
+    "targetCurrencies", "targetCurrency", "domainOverrides", "pausedSites", "feePercent", "enabled", "selectionMode", "underline", "appearance"
   ]);
+  if (Array.isArray(data.pausedSites)) pausedSites = data.pausedSites.filter((d) => normalizeDomain(d) === d);
+  fee = normalizeFee(data.feePercent);
+  showFee();
   const saved = Array.isArray(data.targetCurrencies) ? data.targetCurrencies.filter(isCurrencyCode).slice(0, MAX_TARGET_CURRENCIES) : [];
   if (saved.length) targets = [...new Set(saved)];
   else if (isCurrencyCode(data.targetCurrency)) targets = [data.targetCurrency];
@@ -277,13 +305,19 @@ $("add-site").addEventListener("submit", (e) => {
   addPlate($("preview"));
   renderCurrencies();
   renderSites();
+  renderPaused();
   renderPreview();
   loadPreviewRates();
   const page = location.hash.slice(1);
   if (navButtons.some((b) => b.dataset.page === page)) go(page);
   // Stay in sync with changes made elsewhere (another settings tab, the converter).
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "sync" || !changes.appearance) return;
+    if (area !== "sync") return;
+    if (changes.pausedSites) {
+      pausedSites = Array.isArray(changes.pausedSites.newValue) ? changes.pausedSites.newValue.filter((d) => normalizeDomain(d) === d) : [];
+      renderPaused();
+    }
+    if (!changes.appearance) return;
     const next = normalizeAppearance(changes.appearance.newValue);
     if (JSON.stringify(next) !== JSON.stringify(appearance)) setAppearance(next, false);
   });

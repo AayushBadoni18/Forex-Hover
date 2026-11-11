@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   currencyForLocale,
+  isSiteListed,
   normalizeDomain,
   resolveCurrency
 } from "../src/shared/currency-resolver.ts";
@@ -81,4 +82,12 @@ test("a locale maps to its region's currency for the first-run home currency", (
   assert.equal(currencyForLocale("ja"), "JPY");
   assert.equal(currencyForLocale("not a locale"), null);
   assert.equal(currencyForLocale(undefined), null);
+});
+
+test("paused sites cover the site and its subdomains only", () => {
+  assert.equal(isSiteListed("www.amazon.in", ["amazon.in"]), true);
+  assert.equal(isSiteListed("smile.amazon.in", ["amazon.in"]), true);
+  assert.equal(isSiteListed("notamazon.in", ["amazon.in"]), false);
+  assert.equal(isSiteListed("amazon.in", ["", 5, null]), false);
+  assert.equal(isSiteListed("amazon.in", undefined), false);
 });
