@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  currencyForLocale,
   normalizeDomain,
   resolveCurrency
 } from "../src/shared/currency-resolver.ts";
@@ -71,4 +72,13 @@ test("invalid and public-suffix-like override keys are ignored", () => {
     // The invalid "co.uk" rule is ignored; the .uk hostname still identifies GBP.
     { currency: "GBP", confidence: "medium", reason: "hostname-region" }
   );
+});
+
+test("a locale maps to its region's currency for the first-run home currency", () => {
+  assert.equal(currencyForLocale("en-IN"), "INR");
+  assert.equal(currencyForLocale("de"), "EUR");
+  assert.equal(currencyForLocale("en-GB"), "GBP");
+  assert.equal(currencyForLocale("ja"), "JPY");
+  assert.equal(currencyForLocale("not a locale"), null);
+  assert.equal(currencyForLocale(undefined), null);
 });

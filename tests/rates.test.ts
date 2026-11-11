@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createRateCache, SNAPSHOT_TTL_MS } from "../src/shared/rates.ts";
+import { createRateCache, SNAPSHOT_MAX_AGE_MS, SNAPSHOT_TTL_MS } from "../src/shared/rates.ts";
 
 const memoryStore = () => {
   const data: Record<string, unknown> = {};
@@ -45,9 +45,25 @@ test("serves the last good snapshot as stale when offline", async () => {
   const get = createRateCache(store, fetchFn, () => now);
   await get("USD");
   online = false;
-  now = SNAPSHOT_TTL_MS + 1;
+  now = SNAPSHOT_MAX_AGE_MS + 1;
   const result = await get("USD");
   assert.equal(result.stale, true);
   assert.equal(result.snapshot.rates.EUR, 0.9);
   await assert.rejects(get("EUR"));
+});
+
+test("an expired snapshot under a day old answers at once and refreshes in the background", async () => {
+  const store = memoryStore();
+  let now = 0;
+  let calls = 0;
+  const fetchFn = (async () => (calls++, json({ usd: { usd: 1, eur: calls === 1 ? 0.9 : 0.95 } }))) as typeof fetch;
+  const get = createRateCache(store, fetchFn, () => now);
+  await get("USD");
+  now = SNAPSHOT_TTL_MS + 1;
+  const first = await get("USD");
+  assert.equal(first.stale, false);
+  assert.equal(first.snapshot.rates.EUR, 0.9);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(calls, 2);
+  assert.equal((await get("USD")).snapshot.rates.EUR, 0.95);
 });

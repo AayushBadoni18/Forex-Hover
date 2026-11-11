@@ -4,7 +4,7 @@
  * Built with DOM calls only, so it can live inside any web page.
  */
 import { CURRENCIES, CURRENCY_BY_CODE, isCurrencyCode, type CurrencyCode } from "../shared/currencies.ts";
-import { formatAmount, formatMoney } from "../shared/format.ts";
+import { formatMoney, formatRate } from "../shared/format.ts";
 import type { Appearance } from "./appearance.ts";
 import { ageLabel, h } from "./dom.ts";
 import { flag } from "./flag.ts";
@@ -201,7 +201,7 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
       if (!r) throw new Error("UNSUPPORTED_CURRENCY");
       last = { amount: value, from, to, value: value * r };
       result.textContent = formatMoney(last.value, to);
-      rate.textContent = `1 ${from} = ${r.toPrecision(5)} ${to} · ${res.stale ? "offline, " : ""}${ageLabel(res.timestamp)}`;
+      rate.textContent = `1 ${from} = ${formatRate(r, 5)} ${to} · ${res.stale ? "offline, " : ""}${ageLabel(res.timestamp)}`;
       // Name whichever service supplied the numbers (ExchangeRate-API requires attribution).
       source.replaceChildren(res.source === "open-er-api"
         ? h("a", { href: "https://www.exchangerate-api.com", target: "_blank", rel: "noopener" }, "Rates by ExchangeRate-API")
@@ -302,7 +302,7 @@ export function createConverter({ appearance, onOpenSettings, onClose }: Convert
         class: "row hist-row",
         title: ageLabel(item.at),
         onclick: () => {
-          amount.value = formatAmount(item.amount, item.from).replace(/,/g, "");
+          amount.value = String(item.amount);
           setPair(item.from, item.to);
           convert();
         }

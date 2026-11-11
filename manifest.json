@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Forex Hover Pro",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Hover any price to see it in your currencies. Liquid Glass design, no API key, no tracking.",
   "permissions": [
     "storage",
@@ -56,5 +56,14 @@
         "<all_urls>"
       ]
     }
-  ]
+  ],
+  "minimum_chrome_version": "114",
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+F"
+      },
+      "description": "Open or close the converter"
+    }
+  }
 }

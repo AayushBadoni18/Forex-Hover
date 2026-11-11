@@ -4,6 +4,8 @@ import { isRateSnapshot } from "./validate.ts";
 
 // Both providers publish once a day; 6h keeps us fresh without hammering them.
 export const SNAPSHOT_TTL_MS = 6 * 60 * 60 * 1000;
+// Past the TTL but under a day old, a snapshot is still that day's rates: use it now, refresh quietly.
+export const SNAPSHOT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const TIMEOUT_MS = 8_000;
 
 type Fetch = typeof fetch;
@@ -75,16 +77,28 @@ export interface SnapshotResult {
  */
 export function createRateCache(store: SnapshotStore, fetchFn: Fetch = fetch, clock = Date.now) {
   const inFlight = new Map<CurrencyCode, Promise<SnapshotResult>>();
+  const refreshing = new Set<CurrencyCode>();
+
+  async function refresh(base: CurrencyCode, key: string) {
+    const snapshot = await fetchSnapshot(base, fetchFn, clock());
+    await store.set({ [key]: snapshot });
+    return snapshot;
+  }
 
   async function load(base: CurrencyCode): Promise<SnapshotResult> {
     const key = `snapshot_${base}`;
     const cached = (await store.get(key))[key];
     const valid = isRateSnapshot(cached) && cached.base === base ? cached : null;
     if (valid && valid.expiresAt > clock()) return { snapshot: valid, stale: false };
+    if (valid && clock() - valid.fetchedAt < SNAPSHOT_MAX_AGE_MS) {
+      if (!refreshing.has(base)) {
+        refreshing.add(base);
+        refresh(base, key).catch(() => {}).finally(() => refreshing.delete(base));
+      }
+      return { snapshot: valid, stale: false };
+    }
     try {
-      const snapshot = await fetchSnapshot(base, fetchFn, clock());
-      await store.set({ [key]: snapshot });
-      return { snapshot, stale: false };
+      return { snapshot: await refresh(base, key), stale: false };
     } catch (error) {
       if (valid) return { snapshot: valid, stale: true };
       throw error;

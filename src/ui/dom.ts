@@ -29,7 +29,3 @@ export function ageLabel(timestamp: number, now = Date.now()) {
   const hours = Math.round(mins / 60);
   return hours < 24 ? `${hours}h ago` : `${Math.round(hours / 24)}d ago`;
 }
-
-export function prefersReducedMotion() {
-  return globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-}
