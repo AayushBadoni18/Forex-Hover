@@ -1,19 +1,24 @@
 /**
  * background.js — Forex Hover Pro service worker.
  *
- * Keyless rates: one validated snapshot per base currency, cached in
- * chrome.storage.local, deduplicated in flight, stale-but-labelled offline.
+ * Keyless rates: one validated snapshot, cached in chrome.storage.local,
+ * deduplicated in flight, stale-but-labelled offline. Every pair is derived
+ * from it, so a currency seen for the first time needs no new request.
  */
+import { currencyForLocale } from "./src/shared/currency-resolver.ts";
 import { createRateCache } from "./src/shared/rates.ts";
 import { isRuntimeMessage } from "./src/shared/validate.ts";
 
 const getSnapshot = createRateCache(chrome.storage.local);
 
+const PIVOT = "USD";
+
 async function getRates(base, targets) {
-  const { snapshot, stale } = await getSnapshot(base);
+  const { snapshot, stale } = await getSnapshot(PIVOT);
+  const perBase = snapshot.rates[base];
   const rates = {};
   for (const target of targets) {
-    const rate = snapshot.rates[target];
+    const rate = perBase && snapshot.rates[target] ? snapshot.rates[target] / perBase : 0;
     rates[target] = rate
       ? { success: true, rate, timestamp: snapshot.fetchedAt, stale }
       : { success: false, error: "UNSUPPORTED_CURRENCY" };
@@ -41,19 +46,24 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 });
 
+// First run: start from the user's own currency instead of a fixed list, then show Settings.
+chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  if (reason !== "install") return;
+  const { targetCurrencies } = await chrome.storage.sync.get("targetCurrencies");
+  if (!targetCurrencies) {
+    const home = currencyForLocale(navigator.language) ?? "USD";
+    const targets = [...new Set([home, "USD", "EUR", "GBP"])];
+    await chrome.storage.sync.set({ targetCurrencies: targets, targetCurrency: home });
+  }
+  chrome.runtime.openOptionsPage();
+});
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!isRuntimeMessage(message)) return;
 
   if (message.type === "OPEN_OPTIONS") {
     chrome.runtime.openOptionsPage();
     return;
-  }
-
-  if (message.type === "GET_RATE") {
-    getRates(message.base, [message.target])
-      .then(({ rates, source }) => sendResponse({ ...rates[message.target], source }))
-      .catch((e) => sendResponse({ success: false, error: e.message }));
-    return true;
   }
 
   if (message.type === "GET_RATES_MULTI") {

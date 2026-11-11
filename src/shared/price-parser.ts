@@ -20,6 +20,10 @@ export interface PriceCandidate {
   evidence: CurrencyEvidence;
 }
 
+interface Candidate extends PriceCandidate {
+  numberStart: number;
+}
+
 interface Token {
   start: number;
   end: number;
@@ -36,7 +40,7 @@ interface NumberToken {
 
 const MAX_TEXT_LENGTH = 20_000;
 const MAX_CANDIDATES = 100;
-const CODE_PATTERN = new RegExp(`\\b(?:${CURRENCIES.map(({ code }) => code).join("|")})\\b`, "giu");
+const CODE_PATTERN = new RegExp(`\\b(?:${CURRENCIES.map(({ code }) => code).join("|")})\\b`, "gu");
 const SYMBOL_PATTERN = new RegExp(
   [...new Set(CURRENCIES.flatMap(({ aliases }) => aliases))]
     .sort((a, b) => b.length - a.length)
@@ -46,6 +50,10 @@ const SYMBOL_PATTERN = new RegExp(
 );
 const NUMBER_PATTERN = /\d(?:[\d.,'’\u00a0\u202f ]*\d)?/gu;
 const MINUS_SIGNS = new Set(["-", "−", "﹣", "－"]);
+// "$3k", "$1.5M", "$2.5 billion", "₹5 crore". Single letters must touch the number.
+const MULTIPLIER =
+  /^(?:([kK])|([mM]|[ \u00a0]?(?:mn|million))|([bB]|[ \u00a0]?(?:bn|billion))|[ \u00a0]?(trillion)|[ \u00a0]?(lakhs?)|[ \u00a0]?(crores?|[cC]r))(?![\p{L}\p{N}])/u;
+const MULTIPLIER_VALUES = [1e3, 1e6, 1e9, 1e12, 1e5, 1e7];
 
 /**
  * Extracts price candidates without guessing ambiguous currencies.
@@ -57,9 +65,9 @@ const MINUS_SIGNS = new Set(["-", "−", "﹣", "－"]);
  */
 export function detectPriceCandidates(text: string): PriceCandidate[] {
   const source = text.slice(0, MAX_TEXT_LENGTH);
-  const currencies = tokenizeCurrencies(source);
+  const currencies = mergeAdjacent(tokenizeCurrencies(source), source);
   const numbers = tokenizeNumbers(source);
-  const candidates: PriceCandidate[] = [];
+  const candidates: Candidate[] = [];
 
   for (const currency of currencies) {
     const before = [...numbers]
@@ -73,17 +81,24 @@ export function detectPriceCandidates(text: string): PriceCandidate[] {
 
     const position = number === after ? "prefix" : "suffix";
     const start = Math.min(currency.start, number.start);
-    const end = Math.max(currency.end, number.end);
-    if (MINUS_SIGNS.has(source[start - 1] ?? "")) continue;
+    let end = Math.max(currency.end, number.end);
+    // A minus right before the price is a negative amount, unless it follows a number ("$10-$20").
+    if (MINUS_SIGNS.has(source[start - 1] ?? "") && !/\d\s*$/.test(source.slice(0, start - 1))) continue;
 
-    const amount = parseLocalizedNumber(number.raw, currency.currencyCodes);
+    let amount = parseLocalizedNumber(number.raw, currency.currencyCodes);
     if (amount === null || amount <= 0) continue;
+    const multiplier = position === "prefix" ? MULTIPLIER.exec(source.slice(number.end, number.end + 12)) : null;
+    if (multiplier) {
+      amount *= MULTIPLIER_VALUES[multiplier.slice(1).findIndex(Boolean)];
+      end += multiplier[0].length;
+    }
 
     candidates.push({
       raw: source.slice(start, end),
       amount,
       index: start,
       length: end - start,
+      numberStart: number.start,
       evidence: {
         token: currency.raw,
         kind: currency.kind,
@@ -94,12 +109,47 @@ export function detectPriceCandidates(text: string): PriceCandidate[] {
     if (candidates.length === MAX_CANDIDATES) break;
   }
 
-  const nonOverlapping: PriceCandidate[] = [];
+  const nonOverlapping: Candidate[] = [];
   for (const candidate of candidates.sort((a, b) => a.index - b.index || b.length - a.length)) {
     const previous = nonOverlapping.at(-1);
-    if (!previous || candidate.index >= previous.index + previous.length) nonOverlapping.push(candidate);
+    if (!previous || candidate.index >= previous.index + previous.length) {
+      nonOverlapping.push(candidate);
+      continue;
+    }
+    // "$25.00 USD": a symbol and a code around one number are one price, and the code decides.
+    const [code, symbol] = candidate.evidence.kind === "code" ? [candidate, previous] : [previous, candidate];
+    if (candidate.numberStart !== previous.numberStart || code.evidence.kind !== "code" || symbol.evidence.kind !== "symbol") continue;
+    if (!compatible(symbol.evidence.currencyCodes, code.evidence.currencyCodes[0])) continue;
+    const end = Math.max(previous.index + previous.length, candidate.index + candidate.length);
+    nonOverlapping[nonOverlapping.length - 1] = {
+      ...previous,
+      amount: Math.max(previous.amount, candidate.amount),
+      raw: source.slice(previous.index, end),
+      length: end - previous.index,
+      evidence: { ...code.evidence, position: previous.evidence.position }
+    };
   }
-  return nonOverlapping;
+  return nonOverlapping.map(({ numberStart: _, ...candidate }) => candidate);
+}
+
+const compatible = (symbolCodes: CurrencyCode[], code: CurrencyCode) => !symbolCodes.length || symbolCodes.includes(code);
+
+/** "USD $20", "$ CAD 20": a code next to a symbol it can mean is one token, and the code decides. */
+function mergeAdjacent(tokens: Token[], text: string): Token[] {
+  const merged: Token[] = [];
+  for (const token of tokens) {
+    const previous = merged.at(-1);
+    if (previous && token.start < previous.end) continue; // "$" inside "US$"
+    const [code, symbol] = token.kind === "code" ? [token, previous] : [previous, token];
+    if (
+      previous && code?.kind === "code" && symbol?.kind === "symbol" &&
+      /^[ \u00a0]?$/.test(text.slice(previous.end, token.start)) &&
+      compatible(symbol.currencyCodes, code.currencyCodes[0])
+    ) {
+      merged[merged.length - 1] = { ...code, start: previous.start, end: token.end, raw: text.slice(previous.start, token.end) };
+    } else merged.push(token);
+  }
+  return merged;
 }
 
 function tokenizeCurrencies(text: string): Token[] {
@@ -193,7 +243,7 @@ function getFractionDigits(currency: CurrencyCode): number {
 function hasTokenBoundary(text: string, start: number, token: string): boolean {
   const word = /[\p{L}\p{N}]/u;
   return !(
-    (word.test(token[0]) && word.test(text[start - 1] ?? "")) ||
+    (word.test(token[0]) && /\p{L}/u.test(text[start - 1] ?? "")) ||
     (word.test(token.at(-1) ?? "") && word.test(text[start + token.length] ?? ""))
   );
 }

@@ -140,7 +140,7 @@ Click the toolbar icon and the converter appears right on the page. Drag it anyw
     <td colspan="2"><img src="./readme_images/settings-currencies.webp" alt="Settings: currencies" /></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><b>Currencies</b><br/><sub>Pick up to 10 of 50 currencies. The first is your home currency, used when a symbol like “$” is ambiguous.</sub></td>
+    <td colspan="2" align="center"><b>Currencies</b><br/><sub>Pick up to 10 of 57 currencies. The first is your home currency, used when a symbol like “$” is ambiguous.</sub></td>
   </tr>
 </table>
 
@@ -234,8 +234,9 @@ Open `chrome://extensions`, click **Remove** on Forex Hover Pro, then delete the
 |---|---|
 | **Convert a price** | Hover it. Prices you can hover get a subtle dotted underline. |
 | **Convert any text** | Select text that contains a price. |
-| **Open the converter** | Click the toolbar icon. Drag it by its header. Close with the icon, ×, or Esc. |
-| **Swap / change currencies** | Use the ⇅ button, or click a flag to search all 50 currencies. |
+| **Read big numbers** | `$1.5M`, `$3k`, `$2.5 billion` and `₹5 crore` convert at their full value; `$25 CAD` uses the code, not a guess. |
+| **Open the converter** | Click the toolbar icon or press `Alt+Shift+F`. Drag it by its header. Close with the icon, ×, or Esc. |
+| **Swap / change currencies** | Use the ⇅ button, or click a flag to search all 57 currencies. |
 | **Reuse a conversion** | Tap any row under *Recent* or *Your currencies*. |
 | **Choose your currencies** | Settings → **Currencies**. The first one is your home currency. |
 | **Change the look** | Settings → **Appearance**: material presets, theme, accent colour, background scene, Settings/Converter background switches, Clear liquid mode, and glass sliders. |
@@ -268,7 +269,7 @@ npm run build       # writes the unpacked extension to dist/
 | `src/ui/` | Glass engine, converter, background scenes, appearance settings, tooltip view, flags, icons |
 | `tests/` | Unit tests, fixtures, and the Chrome smoke test |
 
-Design and planning docs: [Architecture](ARCHITECTURE.md) · [Decisions](DECISIONS.md) · [Features](FEATURES.md) · [Roadmap](ROADMAP.md) · [Implementation plan](IMPLEMENTATION_PLAN.md) · [Audit](PROJECT_AUDIT.md)
+Design and planning docs: [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/DECISIONS.md) · [Features](docs/FEATURES.md) · [Roadmap](docs/ROADMAP.md) · [Implementation plan](docs/IMPLEMENTATION_PLAN.md) · [Audit](docs/PROJECT_AUDIT.md)
 
 ---
 
@@ -283,7 +284,7 @@ Design and planning docs: [Architecture](ARCHITECTURE.md) · [Decisions](DECISIO
 
 ## 🛡️ Privacy
 
-No account, no analytics, no telemetry. Page text is processed locally and never uploaded; only currency codes are sent to the rate services. Rates are daily mid-market reference rates, not a trading quote.
+No account, no analytics, no telemetry. Page text is processed locally and never uploaded; only currency codes are sent to the rate services. Rates are daily mid-market reference rates, not a trading quote. Full policy: [PRIVACY.md](./PRIVACY.md).
 
 ---
 

@@ -1,5 +1,5 @@
 import { CURRENCY_BY_CODE, isCurrencyCode } from "../shared/currencies.ts";
-import { formatMoney } from "../shared/format.ts";
+import { formatMoney, formatRate } from "../shared/format.ts";
 import { ageLabel, h } from "./dom.ts";
 import { flag, FLAG_CSS } from "./flag.ts";
 
@@ -116,7 +116,7 @@ export function buildResult({ amount, originalCurrency, rates, isSelection, stal
     return h("div", { class: "tt-row", title: nameOf(code), "aria-label": `${nameOf(code)}: ${converted}` },
       namedFlag(code),
       h("div", { class: "tt-amount" }, converted),
-      h("div", { class: "tt-rate" }, `${symbolOf(originalCurrency)}1 = ${symbolOf(code)}${entry.rate.toPrecision(4)}`)
+      h("div", { class: "tt-rate" }, `${symbolOf(originalCurrency)}1 = ${symbolOf(code)}${formatRate(entry.rate)}`)
     );
   });
 

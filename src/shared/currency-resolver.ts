@@ -64,6 +64,11 @@ function regionOf(language?: string): string | null {
   }
 }
 
+/** The currency of a locale's region ("en-IN" → INR, "de" → EUR), or null. */
+export function currencyForLocale(language?: string): CurrencyCode | null {
+  return REGION_CURRENCY[regionOf(language) ?? ""] ?? null;
+}
+
 /**
  * Decides which currency an ambiguous price means, with an explainable reason.
  * Precedence: explicit code > unique symbol > site rule > page language region

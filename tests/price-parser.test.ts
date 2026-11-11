@@ -41,3 +41,37 @@ test("ungrouped integers are never partially truncated", () => {
     assert.ok(Number.isFinite(candidate.amount));
   }
 });
+
+test("real-world price shapes", () => {
+  // [text, [amount, currencies the evidence must be exactly, raw]...]
+  const cases: [string, ...[number, string, string][]][] = [
+    ["$25.00 USD", [25, "USD", "$25.00 USD"]],
+    ["$20 CAD", [20, "CAD", "$20 CAD"]],
+    ["USD $20", [20, "USD", "USD $20"]],
+    ["US $20", [20, "USD", "US $20"]],
+    ["€20 USD", [20, "EUR", "€20"]],
+    ["$10-$20", [10, "", "$10"], [20, "", "$20"]],
+    ["-$5"],
+    ["Try 30 days free"],
+    ["Rs. 500", [500, "INR/PKR/LKR/NPR", "Rs. 500"]],
+    ["$3k", [3000, "", "$3k"]],
+    ["$1.5M", [1_500_000, "", "$1.5M"]],
+    ["$2.5 billion", [2_500_000_000, "", "$2.5 billion"]],
+    ["₹5 crore", [50_000_000, "INR", "₹5 crore"]],
+    ["$5 m", [5, "", "$5"]],
+    ["$1.5Mbps", [1.5, "", "$1.5"]],
+    ["1000円", [1000, "JPY", "1000円"]],
+    ["99kr", [99, "NOK/SEK/DKK/ISK", "99kr"]],
+    ["NT$300", [300, "TWD", "NT$300"]],
+    ["R5 5600"]
+  ];
+  for (const [text, ...expected] of cases) {
+    const actual = detectPriceCandidates(text);
+    assert.equal(actual.length, expected.length, text);
+    expected.forEach(([amount, codes, raw], i) => {
+      assert.equal(actual[i].amount, amount, text);
+      assert.equal(actual[i].raw, raw, text);
+      if (codes) assert.equal(actual[i].evidence.currencyCodes.join("/"), codes, text);
+    });
+  }
+});

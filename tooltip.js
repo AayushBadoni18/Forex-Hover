@@ -88,12 +88,12 @@ window.ForexTooltip ??= (() => {
   }
 
   function showMultiResult(view) {
-    if (!body) return;
+    show(view.anchor);
     render(...buildResult(view));
   }
 
-  function showError(message) {
-    if (!body) return;
+  function showError(message, anchorOrCoords) {
+    show(anchorOrCoords);
     render(h("div", { class: "tt-err" }, message));
   }
 

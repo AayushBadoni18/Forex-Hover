@@ -331,9 +331,10 @@ import { normalizeAppearance } from "./src/ui/appearance.ts";
   async function showConversion({ amount, currency, reason, anchor, isSelection }) {
     if (!isContextValid()) return handleContextLost();
     const id = ++requestId;
-    window.ForexTooltip.showLoading(anchor);
+    // Cached rates answer within a frame or two: only a slow answer gets the skeleton.
+    const loading = setTimeout(() => id === requestId && window.ForexTooltip.showLoading(anchor), 120);
     try {
-      const result = await fetchRates(currency);
+      const result = await fetchRates(currency).finally(() => clearTimeout(loading));
       if (id !== requestId) return;
       if (!result) return window.ForexTooltip.hide();
       window.ForexTooltip.showMultiResult({
@@ -343,7 +344,8 @@ import { normalizeAppearance } from "./src/ui/appearance.ts";
         stale: result.stale,
         source: result.source,
         isSelection,
-        reason
+        reason,
+        anchor
       });
     } catch (err) {
       if (id !== requestId) return;
@@ -351,7 +353,7 @@ import { normalizeAppearance } from "./src/ui/appearance.ts";
         handleContextLost();
         return window.ForexTooltip?.hide();
       }
-      window.ForexTooltip.showError("Rates unavailable. Check your connection.");
+      window.ForexTooltip.showError("Rates unavailable. Check your connection.", anchor);
     }
   }
 
